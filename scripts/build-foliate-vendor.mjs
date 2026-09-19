@@ -6,11 +6,11 @@
  *   —— 必须与 public/foliate/view.js「同级」（view.js 用 `await import('./vendor/zip.js')`，相对自身解析，R11）。
  *   —— PDF（vendor/pdfjs/）推迟到 Phase 7，本脚本不处理。
  *
- * 体积断言（CI 用）：
- *   zip.js ≈ 36 KB（@zip.js/zip.js 2.8.x，与上游预构建产物逐字节一致）
- *   本项目锁定 ^2.15.0，实测 59,057 B。断言上限取 64 KiB：
- *     - 若入口被改回包根 → ~122 KB，超限即失败
- *     - 若入口被改成裸规格符 → WASM 变体，体积与行为都不可控，同样超限
+ * 体积断言（CI 用）—— **宽松兜底**，真正的保护是下面 assertEntryIsZipCore() 的入口守卫。
+ * （打包器不同体积差很多：同一份 2.15.0 输入，rollup 出 ≈63 KB，esbuild 出 ≈96 KB，
+ *   写死「≈36 KB」必然误报 —— 那是 2.8.x 的体积。见 docs/ENGINE.md §3.2。）
+ *
+ * 上限取 112 KiB：能拦下包根入口（≈122 KB）与 WASM 变体，同时给 esbuild 留余量。
  */
 import { createHash } from 'node:crypto'
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
@@ -24,7 +24,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT_DIR = resolve(root, 'public/foliate/vendor')
 
 const ENTRIES = [
-  { name: 'zip.js', entry: 'scripts/entries/zip.js', maxBytes: 64 * 1024, expected: '≈36 KB（zip.js 2.8.x）/ 59,057 B（2.15.0）' },
+  { name: 'zip.js', entry: 'scripts/entries/zip.js', maxBytes: 112 * 1024, expected: 'rollup ≈63 KB（2.15.0）/ ≈36 KB（2.8.x）' },
   { name: 'fflate.js', entry: 'scripts/entries/fflate.js', maxBytes: 8 * 1024, expected: '≈3.9 KB' },
 ]
 
