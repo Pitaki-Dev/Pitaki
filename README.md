@@ -21,7 +21,7 @@
 | 阶段 | 状态 |
 |---|---|
 | 技术选型与可行性验证 | ✅ 已完成（对照 npm registry / crates.io / 上游源码实测） |
-| 依赖与许可证审计 | ✅ npm 已完成（101 包）· ⏳ Rust 待复核 → [docs/LICENSING.md](docs/LICENSING.md) |
+| 依赖与许可证审计 | ✅ 已完成（npm 101 包 + Rust 626 crate）→ [docs/LICENSING.md](docs/LICENSING.md) |
 | 工程骨架搭建 | 📋 待开始 |
 | 引擎接入与核心功能 | 📋 规划中 |
 

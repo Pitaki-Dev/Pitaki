@@ -1,0 +1,709 @@
+[
+  {
+    "name": "@adobe/react-spectrum",
+    "version": "3.47.5",
+    "license": "Apache-2.0",
+    "path": "node_modules/@adobe/react-spectrum",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@adobe/react-spectrum-ui",
+    "version": "1.2.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@adobe/react-spectrum-ui",
+    "description": "Spectrum (S1) icons in React"
+  },
+  {
+    "name": "@adobe/react-spectrum-workflow",
+    "version": "2.3.5",
+    "license": "Apache-2.0",
+    "path": "node_modules/@adobe/react-spectrum-workflow",
+    "description": "Spectrum (S1) icons in React"
+  },
+  {
+    "name": "@babel/runtime",
+    "version": "7.29.7",
+    "license": "MIT",
+    "path": "node_modules/@babel/runtime",
+    "description": "babel's modular runtime helpers"
+  },
+  {
+    "name": "@heroui/react",
+    "version": "3.2.6",
+    "license": "MIT",
+    "path": "node_modules/@heroui/react",
+    "description": "🚀 Beautiful and modern React UI library built with Tailwind CSS 4.0."
+  },
+  {
+    "name": "@heroui/styles",
+    "version": "3.2.6",
+    "license": "MIT",
+    "path": "node_modules/@heroui/styles",
+    "description": "HeroUI core styles and Tailwind plugin"
+  },
+  {
+    "name": "@internationalized/date",
+    "version": "3.12.4",
+    "license": "Apache-2.0",
+    "path": "node_modules/@internationalized/date",
+    "description": "Internationalized calendar, date, and time manipulation utilities"
+  },
+  {
+    "name": "@internationalized/number",
+    "version": "3.6.8",
+    "license": "Apache-2.0",
+    "path": "node_modules/@internationalized/number",
+    "description": "Internationalized number formatting and parsing utilities"
+  },
+  {
+    "name": "@internationalized/string",
+    "version": "3.2.10",
+    "license": "Apache-2.0",
+    "path": "node_modules/@internationalized/string",
+    "description": "Internationalized string formatting and locale negotiation"
+  },
+  {
+    "name": "@jridgewell/gen-mapping",
+    "version": "0.3.13",
+    "license": "MIT",
+    "path": "node_modules/@jridgewell/gen-mapping",
+    "description": "Generate source maps"
+  },
+  {
+    "name": "@jridgewell/remapping",
+    "version": "2.3.5",
+    "license": "MIT",
+    "path": "node_modules/@jridgewell/remapping",
+    "description": "Remap sequential sourcemaps through transformations to point at the original sou"
+  },
+  {
+    "name": "@jridgewell/resolve-uri",
+    "version": "3.1.2",
+    "license": "MIT",
+    "path": "node_modules/@jridgewell/resolve-uri",
+    "description": "Resolve a URI relative to an optional base URI"
+  },
+  {
+    "name": "@jridgewell/sourcemap-codec",
+    "version": "1.6.0",
+    "license": "MIT",
+    "path": "node_modules/@jridgewell/sourcemap-codec",
+    "description": "Encode/decode sourcemap mappings"
+  },
+  {
+    "name": "@jridgewell/trace-mapping",
+    "version": "0.3.31",
+    "license": "MIT",
+    "path": "node_modules/@jridgewell/trace-mapping",
+    "description": "Trace the original position through a source map"
+  },
+  {
+    "name": "@napi-rs/canvas",
+    "version": "0.1.100",
+    "license": "MIT",
+    "path": "node_modules/@napi-rs/canvas",
+    "description": "Canvas for Node.js with skia backend"
+  },
+  {
+    "name": "@napi-rs/canvas-linux-arm64-gnu",
+    "version": "0.1.100",
+    "license": "MIT",
+    "path": "node_modules/@napi-rs/canvas-linux-arm64-gnu",
+    "description": "Canvas for Node.js with skia backend"
+  },
+  {
+    "name": "@oxc-project/types",
+    "version": "0.150.0",
+    "license": "MIT",
+    "path": "node_modules/@oxc-project/types",
+    "description": "Types for Oxc AST nodes"
+  },
+  {
+    "name": "@radix-ui/primitive",
+    "version": "1.1.7",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/primitive",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-avatar",
+    "version": "1.2.6",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-avatar",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-compose-refs",
+    "version": "1.1.5",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-compose-refs",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-context",
+    "version": "1.2.2",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-context",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-primitive",
+    "version": "2.1.10",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-primitive",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-slot",
+    "version": "1.3.3",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-slot",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-use-callback-ref",
+    "version": "1.1.4",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-use-callback-ref",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-use-is-hydrated",
+    "version": "0.1.3",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-use-is-hydrated",
+    "description": ""
+  },
+  {
+    "name": "@radix-ui/react-use-layout-effect",
+    "version": "1.1.4",
+    "license": "MIT",
+    "path": "node_modules/@radix-ui/react-use-layout-effect",
+    "description": ""
+  },
+  {
+    "name": "@react-aria/color",
+    "version": "3.2.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-aria/color",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-aria/ssr",
+    "version": "3.10.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-aria/ssr",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-aria/utils",
+    "version": "3.34.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-aria/utils",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-spectrum/color",
+    "version": "3.2.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-spectrum/color",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-spectrum/provider",
+    "version": "3.11.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-spectrum/provider",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-stately/color",
+    "version": "3.10.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-stately/color",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-stately/utils",
+    "version": "3.12.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-stately/utils",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-types/color",
+    "version": "3.2.0",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-types/color",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@react-types/shared",
+    "version": "3.36.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/@react-types/shared",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@rolldown/binding-linux-arm64-gnu",
+    "version": "1.2.9",
+    "license": "MIT",
+    "path": "node_modules/@rolldown/binding-linux-arm64-gnu",
+    "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  {
+    "name": "@rolldown/pluginutils",
+    "version": "1.0.1",
+    "license": "MIT",
+    "path": "node_modules/@rolldown/pluginutils",
+    "description": "Plugin utilities for Rolldown"
+  },
+  {
+    "name": "@spectrum-icons/ui",
+    "version": "3.7.2",
+    "license": "Apache-2.0",
+    "path": "node_modules/@spectrum-icons/ui",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@spectrum-icons/workflow",
+    "version": "4.3.2",
+    "license": "Apache-2.0",
+    "path": "node_modules/@spectrum-icons/workflow",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "@swc/helpers",
+    "version": "0.5.23",
+    "license": "Apache-2.0",
+    "path": "node_modules/@swc/helpers",
+    "description": "External helpers for the swc project."
+  },
+  {
+    "name": "@tailwindcss/node",
+    "version": "4.3.3",
+    "license": "MIT",
+    "path": "node_modules/@tailwindcss/node",
+    "description": "A utility-first CSS framework for rapidly building custom user interfaces."
+  },
+  {
+    "name": "@tailwindcss/oxide",
+    "version": "4.3.3",
+    "license": "MIT",
+    "path": "node_modules/@tailwindcss/oxide",
+    "description": ""
+  },
+  {
+    "name": "@tailwindcss/oxide-linux-arm64-gnu",
+    "version": "4.3.3",
+    "license": "MIT",
+    "path": "node_modules/@tailwindcss/oxide-linux-arm64-gnu",
+    "description": ""
+  },
+  {
+    "name": "@tailwindcss/vite",
+    "version": "4.3.3",
+    "license": "MIT",
+    "path": "node_modules/@tailwindcss/vite",
+    "description": "A utility-first CSS framework for rapidly building custom user interfaces."
+  },
+  {
+    "name": "@tauri-apps/api",
+    "version": "2.11.1",
+    "license": "Apache-2.0 OR MIT",
+    "path": "node_modules/@tauri-apps/api",
+    "description": "Tauri API definitions"
+  },
+  {
+    "name": "@tauri-apps/cli",
+    "version": "2.11.4",
+    "license": "Apache-2.0 OR MIT",
+    "path": "node_modules/@tauri-apps/cli",
+    "description": "Command line interface for building Tauri apps"
+  },
+  {
+    "name": "@tauri-apps/cli-linux-arm64-gnu",
+    "version": "2.11.4",
+    "license": "Apache-2.0 OR MIT",
+    "path": "node_modules/@tauri-apps/cli-linux-arm64-gnu",
+    "description": "Command line interface for building Tauri apps"
+  },
+  {
+    "name": "@tauri-apps/plugin-fs",
+    "version": "2.5.2",
+    "license": "MIT OR Apache-2.0",
+    "path": "node_modules/@tauri-apps/plugin-fs",
+    "description": "Access the file system."
+  },
+  {
+    "name": "@tauri-apps/plugin-sql",
+    "version": "2.4.1",
+    "license": "MIT OR Apache-2.0",
+    "path": "node_modules/@tauri-apps/plugin-sql",
+    "description": "Interface with SQL databases"
+  },
+  {
+    "name": "@typescript/typescript-linux-arm64",
+    "version": "7.0.2",
+    "license": "Apache-2.0",
+    "path": "node_modules/@typescript/typescript-linux-arm64",
+    "description": "TypeScript is a language for application scale JavaScript development"
+  },
+  {
+    "name": "@vitejs/plugin-react",
+    "version": "6.1.1",
+    "license": "MIT",
+    "path": "node_modules/@vitejs/plugin-react",
+    "description": "The default Vite plugin for React projects"
+  },
+  {
+    "name": "@zip.js/zip.js",
+    "version": "2.15.0",
+    "license": "BSD-3-Clause",
+    "path": "node_modules/@zip.js/zip.js",
+    "description": "A JavaScript library to zip and unzip files in the browser, Deno and Node.js"
+  },
+  {
+    "name": "aria-hidden",
+    "version": "1.2.6",
+    "license": "MIT",
+    "path": "node_modules/aria-hidden",
+    "description": "Cast aria-hidden to everything, except..."
+  },
+  {
+    "name": "client-only",
+    "version": "0.0.1",
+    "license": "MIT",
+    "path": "node_modules/client-only",
+    "description": "This is a marker package to indicate that a module can only be used in Client Co"
+  },
+  {
+    "name": "clsx",
+    "version": "2.1.1",
+    "license": "MIT",
+    "path": "node_modules/clsx",
+    "description": "A tiny (239B) utility for constructing className strings conditionally."
+  },
+  {
+    "name": "csstype",
+    "version": "3.2.3",
+    "license": "MIT",
+    "path": "node_modules/csstype",
+    "description": "Strict TypeScript and Flow types for style based on MDN data"
+  },
+  {
+    "name": "detect-libc",
+    "version": "2.1.2",
+    "license": "Apache-2.0",
+    "path": "node_modules/detect-libc",
+    "description": "Node.js module to detect the C standard library (libc) implementation family and"
+  },
+  {
+    "name": "dom-helpers",
+    "version": "5.2.1",
+    "license": "MIT",
+    "path": "node_modules/dom-helpers",
+    "description": "tiny modular DOM lib for ie9+"
+  },
+  {
+    "name": "enhanced-resolve",
+    "version": "5.25.1",
+    "license": "MIT",
+    "path": "node_modules/enhanced-resolve",
+    "description": "Offers a async require.resolve function. It's highly configurable."
+  },
+  {
+    "name": "fdir",
+    "version": "6.5.0",
+    "license": "MIT",
+    "path": "node_modules/fdir",
+    "description": "The fastest directory crawler & globbing alternative to glob, fast-glob, & tiny-"
+  },
+  {
+    "name": "fflate",
+    "version": "0.8.3",
+    "license": "MIT",
+    "path": "node_modules/fflate",
+    "description": "High performance (de)compression in an 8kB package"
+  },
+  {
+    "name": "graceful-fs",
+    "version": "4.2.11",
+    "license": "ISC",
+    "path": "node_modules/graceful-fs",
+    "description": "A drop-in replacement for fs, making various improvements."
+  },
+  {
+    "name": "input-otp",
+    "version": "1.5.0",
+    "license": "MIT",
+    "path": "node_modules/input-otp",
+    "description": "One-time password input component for React."
+  },
+  {
+    "name": "jiti",
+    "version": "2.7.0",
+    "license": "MIT",
+    "path": "node_modules/jiti",
+    "description": "Runtime typescript and ESM support for Node.js"
+  },
+  {
+    "name": "js-tokens",
+    "version": "4.0.0",
+    "license": "MIT",
+    "path": "node_modules/js-tokens",
+    "description": "A regex that tokenizes JavaScript."
+  },
+  {
+    "name": "lightningcss",
+    "version": "1.33.0",
+    "license": "MPL-2.0",
+    "path": "node_modules/vite/node_modules/lightningcss",
+    "description": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  {
+    "name": "lightningcss",
+    "version": "1.32.0",
+    "license": "MPL-2.0",
+    "path": "node_modules/lightningcss",
+    "description": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  {
+    "name": "lightningcss-linux-arm64-gnu",
+    "version": "1.33.0",
+    "license": "MPL-2.0",
+    "path": "node_modules/vite/node_modules/lightningcss-linux-arm64-gnu",
+    "description": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  {
+    "name": "lightningcss-linux-arm64-gnu",
+    "version": "1.32.0",
+    "license": "MPL-2.0",
+    "path": "node_modules/lightningcss-linux-arm64-gnu",
+    "description": "A CSS parser, transformer, and minifier written in Rust"
+  },
+  {
+    "name": "loose-envify",
+    "version": "1.4.0",
+    "license": "MIT",
+    "path": "node_modules/loose-envify",
+    "description": "Fast (and loose) selective `process.env` replacer using js-tokens instead of an "
+  },
+  {
+    "name": "lucide-react",
+    "version": "1.47.0",
+    "license": "ISC",
+    "path": "node_modules/lucide-react",
+    "description": "A Lucide icon library package for React applications."
+  },
+  {
+    "name": "magic-string",
+    "version": "0.30.21",
+    "license": "MIT",
+    "path": "node_modules/magic-string",
+    "description": "Modify strings, generate sourcemaps"
+  },
+  {
+    "name": "nanoid",
+    "version": "3.3.19",
+    "license": "MIT",
+    "path": "node_modules/nanoid",
+    "description": "A tiny (116 bytes), secure URL-friendly unique string ID generator"
+  },
+  {
+    "name": "node-readable-to-web-readable-stream",
+    "version": "0.4.2",
+    "license": "MIT",
+    "path": "node_modules/node-readable-to-web-readable-stream",
+    "description": "Convert Node Readable to Web API ReadableStream"
+  },
+  {
+    "name": "object-assign",
+    "version": "4.1.1",
+    "license": "MIT",
+    "path": "node_modules/object-assign",
+    "description": "ES2015 `Object.assign()` ponyfill"
+  },
+  {
+    "name": "pdfjs-dist",
+    "version": "5.5.207",
+    "license": "Apache-2.0",
+    "path": "node_modules/pdfjs-dist",
+    "description": "Generic build of Mozilla's PDF.js library."
+  },
+  {
+    "name": "picocolors",
+    "version": "1.1.1",
+    "license": "ISC",
+    "path": "node_modules/picocolors",
+    "description": "The tiniest and the fastest library for terminal output formatting with ANSI col"
+  },
+  {
+    "name": "picomatch",
+    "version": "4.0.7",
+    "license": "MIT",
+    "path": "node_modules/picomatch",
+    "description": "Blazing fast and accurate glob matcher written in JavaScript, with no dependenci"
+  },
+  {
+    "name": "postcss",
+    "version": "8.5.28",
+    "license": "MIT",
+    "path": "node_modules/postcss",
+    "description": "Tool for transforming styles with JS plugins"
+  },
+  {
+    "name": "prop-types",
+    "version": "15.8.1",
+    "license": "MIT",
+    "path": "node_modules/prop-types",
+    "description": "Runtime type checking for React props and similar objects."
+  },
+  {
+    "name": "react",
+    "version": "19.3.0",
+    "license": "MIT",
+    "path": "node_modules/react",
+    "description": "React is a JavaScript library for building user interfaces."
+  },
+  {
+    "name": "react-aria",
+    "version": "3.52.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/react-aria",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "react-aria-components",
+    "version": "1.21.1",
+    "license": "Apache-2.0",
+    "path": "node_modules/react-aria-components",
+    "description": "A library of styleable components built using React Aria"
+  },
+  {
+    "name": "react-dom",
+    "version": "19.3.0",
+    "license": "MIT",
+    "path": "node_modules/react-dom",
+    "description": "React package for working with the DOM."
+  },
+  {
+    "name": "react-is",
+    "version": "16.13.1",
+    "license": "MIT",
+    "path": "node_modules/react-is",
+    "description": "Brand checking of React Elements."
+  },
+  {
+    "name": "react-stately",
+    "version": "3.50.0",
+    "license": "Apache-2.0",
+    "path": "node_modules/react-stately",
+    "description": "Spectrum UI components in React"
+  },
+  {
+    "name": "react-transition-group",
+    "version": "4.4.5",
+    "license": "BSD-3-Clause",
+    "path": "node_modules/react-transition-group",
+    "description": "A react component toolset for managing animations"
+  },
+  {
+    "name": "rolldown",
+    "version": "1.2.9",
+    "license": "MIT",
+    "path": "node_modules/rolldown",
+    "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API."
+  },
+  {
+    "name": "scheduler",
+    "version": "0.28.0",
+    "license": "MIT",
+    "path": "node_modules/scheduler",
+    "description": "Cooperative scheduler for the browser environment."
+  },
+  {
+    "name": "source-map-js",
+    "version": "1.2.1",
+    "license": "BSD-3-Clause",
+    "path": "node_modules/source-map-js",
+    "description": "Generates and consumes source maps"
+  },
+  {
+    "name": "tailwind-variants",
+    "version": "3.3.1",
+    "license": "MIT",
+    "path": "node_modules/tailwind-variants",
+    "description": "🦄 Tailwindcss first-class variant API"
+  },
+  {
+    "name": "tailwindcss",
+    "version": "4.3.3",
+    "license": "MIT",
+    "path": "node_modules/tailwindcss",
+    "description": "A utility-first CSS framework for rapidly building custom user interfaces."
+  },
+  {
+    "name": "tapable",
+    "version": "2.3.3",
+    "license": "MIT",
+    "path": "node_modules/tapable",
+    "description": "Just a little module for plugins."
+  },
+  {
+    "name": "tinyglobby",
+    "version": "0.2.17",
+    "license": "MIT",
+    "path": "node_modules/tinyglobby",
+    "description": "A fast and minimal alternative to globby and fast-glob"
+  },
+  {
+    "name": "tslib",
+    "version": "2.8.1",
+    "license": "0BSD",
+    "path": "node_modules/tslib",
+    "description": "Runtime library for TypeScript helper functions"
+  },
+  {
+    "name": "tw-animate-css",
+    "version": "1.4.0",
+    "license": "MIT",
+    "path": "node_modules/tw-animate-css",
+    "description": "TailwindCSS v4.0 compatible replacement for `tailwindcss-animate`."
+  },
+  {
+    "name": "typescript",
+    "version": "7.0.2",
+    "license": "Apache-2.0",
+    "path": "node_modules/typescript",
+    "description": "TypeScript is a language for application scale JavaScript development"
+  },
+  {
+    "name": "use-sync-external-store",
+    "version": "1.7.0",
+    "license": "MIT",
+    "path": "node_modules/use-sync-external-store",
+    "description": "Backwards compatible shim for React's useSyncExternalStore. Works with any React"
+  },
+  {
+    "name": "vite",
+    "version": "8.3.0",
+    "license": "MIT",
+    "path": "node_modules/vite",
+    "description": "Native-ESM powered web dev build tool"
+  },
+  {
+    "name": "vscode-jsonrpc",
+    "version": "9.0.0",
+    "license": "MIT",
+    "path": "node_modules/typescript/vendor/vscode-jsonrpc",
+    "description": "A json rpc implementation over streams"
+  },
+  {
+    "name": "zustand",
+    "version": "5.0.15",
+    "license": "MIT",
+    "path": "node_modules/zustand",
+    "description": "🐻 Bear necessities for state management in React"
+  }
+]

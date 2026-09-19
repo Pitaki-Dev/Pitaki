@@ -3,6 +3,7 @@
 [← 返回 README](../README.md)
 
 > 本文档记录 Pitaki 计划使用的全部依赖的许可证扫描结果，并据此确定本项目的开源许可证。
+> 审计日期：**2026-09-19**
 
 ---
 
@@ -11,51 +12,82 @@
 | 问题 | 结论 |
 |---|---|
 | 本项目应选什么许可证？ | ✅ **MIT**（当前已采用） |
-| 是否存在传染性 copyleft 依赖？ | ❌ 运行时依赖中**没有 GPL / AGPL / LGPL** |
-| 是否有需要注意的许可证？ | ⚠️ 有：4 个 MPL-2.0（**仅构建期**，无影响） |
-| 需要履行的义务 | 保留 MIT / Apache-2.0 / BSD-3 / ISC 的版权声明与许可证全文 |
+| 是否存在传染性 copyleft 依赖？ | ❌ **没有** —— 无强制性的 GPL / AGPL / LGPL |
+| 是否有需要注意的许可证？ | ⚠️ 有：npm 侧 4 个 MPL-2.0（**仅构建期**）；Rust 侧 4 个 MPL-2.0（**运行时**，但为文件级 copyleft，无传染性） |
+| 需要履行的义务 | 保留 MIT / Apache-2.0 / BSD-3 / ISC 的版权声明与许可证全文；对 MPL-2.0 组件提供其源码获取方式 |
 
-**MIT 可行**，理由见 §5。
+**MIT 可行**，理由见 [§6](#6-为什么选-mit)。
 
 ---
 
-## 2. 扫描方法
+## 2. 扫描方法与可复现性
+
+审计**不是**读取声明清单，而是真实安装 / 真实下载后逐个解析。
 
 ### 2.1 前端（npm）
-
-**真实安装 + 递归扫描**，非读取声明清单：
 
 1. 按 [README 技术栈表](../README.md#技术栈) 构建 `package.json`（含全部运行时与开发依赖）；
 2. `npm install` 实际安装依赖树；
 3. 递归遍历 `node_modules`（含嵌套），对每个包：
    - 优先读取 `package.json` 的 `license` / `licenses` 字段；
    - 缺失时回退到 `LICENSE*` / `COPYING*` 文件的**内容特征识别**；
-   - 过滤 npm 的**子路径 shim**（如 `dom-helpers/activeElement`，`private: true` 且无 `version` 字段）——这类条目不是真实包，会污染统计。
+   - 过滤 npm 的**子路径 shim**（如 `dom-helpers/activeElement`，`private: true` 且无 `version` 字段）—— 这类条目不是真实包，会污染统计。
 
 **结果：101 个真实包，0 个未声明。**
 
-### 2.2 桌面端（Rust / crates.io）
+### 2.2 桌面端（Rust）
 
-通过 crates.io API 对依赖图做 BFS（排除 dev-dependencies）。
-> ⚠️ 注意：crates.io 的 dependencies 接口返回**版本约束**而非解析后的版本，因此取每个 crate 的 `max_stable_version` 的许可证，属合理近似。**精确结果应以最终 `Cargo.lock` + `cargo-deny` 为准。**
+**⚠️ 这里踩过一个坑，值得记录：**
+
+最初尝试用 crates.io 的 JSON API（`/api/v1/crates/{name}`）逐个查询，但实测**限流极其激进**：
+
+```
+顺序请求 10 个： 成功 2 个，8 个 HTTP 429
+并发 6 请求：   10 个全部 HTTP 429
+```
+
+加上「每个 crate 需要 2 次请求（元数据 + 依赖列表）」，实测约 **3 秒/crate**，300 个 crate 需要 15 分钟以上，极易超时。
+
+**最终方案** —— 把「取依赖图」和「取许可证」拆到两个无限流的静态 CDN：
+
+| 需求 | 数据源 | 说明 |
+|---|---|---|
+| 依赖图 | `index.crates.io`（稀疏索引） | 静态 CDN，含完整 `deps` 与 `kind`，无限流 |
+| 许可证 | `static.crates.io` 上 `.crate` 包内的 `Cargo.toml` | 同为 CDN；流式解压读到 `Cargo.toml` 即停 |
+
+流程：BFS 遍历依赖图（排除 `kind = "dev"`，保留 normal/build/optional）→ 并发拉取许可证 → **每 50 条增量落盘**（避免超时丢数据）。
+
+**结果：626 个 crate，全部取得许可证。**
+
+> ⚠️ **近似说明**：crates.io 的依赖接口返回的是版本**约束**而非解析后的版本，因此扫描取的是每个 crate 的**最新稳定版**。精确结果应以最终 `Cargo.lock` + `cargo-deny` 为准。
+
+### 2.3 数据与脚本（可复现）
+
+| 路径 | 内容 |
+|---|---|
+| [`scripts/license-audit/scan-npm.py`](../scripts/license-audit/scan-npm.py) | npm 扫描器 |
+| [`scripts/license-audit/scan-rust.py`](../scripts/license-audit/scan-rust.py) | Rust 扫描器 |
+| [`docs/license-audit/npm-packages.json`](license-audit/npm-packages.json) | npm 原始结果（101 条） |
+| [`docs/license-audit/rust-crates.json`](license-audit/rust-crates.json) | Rust 原始结果（626 条） |
 
 ---
 
-## 3. npm 依赖许可证分布
+## 3. 前端依赖（npm）— 101 个包
+
+### 3.1 分布
 
 | 包数 | 许可证 | 性质 |
 |---:|---|---|
 | 60 | **MIT** | 宽松 |
 | 25 | **Apache-2.0** | 宽松，需附 NOTICE |
 | 4 | **MPL-2.0** | 文件级 copyleft（**仅构建期**） |
-| 3 | **Apache-2.0 OR MIT** | 双许可（Tauri CLI） |
+| 3 | **Apache-2.0 OR MIT** | 双许可 |
 | 3 | **BSD-3-Clause** | 宽松 |
 | 3 | **ISC** | 宽松 |
-| 2 | **MIT OR Apache-2.0** | 双许可（Tauri 插件） |
+| 2 | **MIT OR Apache-2.0** | 双许可 |
 | 1 | **0BSD** | 无署名义务 |
-| **101** | | **合计** |
 
-### 3.1 关键运行时依赖
+### 3.2 关键运行时依赖
 
 | 包 | 版本 | 许可证 |
 |---|---|---|
@@ -69,22 +101,22 @@
 | `pdfjs-dist` | 5.5.207 | **Apache-2.0** |
 | `lucide-react` | 1.47.0 | **ISC** |
 
-### 3.2 需要注意的项
+### 3.3 注意事项
 
-#### ⚠️ MPL-2.0：`lightningcss`
+#### ⚠️ MPL-2.0：`lightningcss` —— 无影响
 
 ```
-vite@8.3.0                          → lightningcss@1.33.0
+vite@8.3.0                      → lightningcss@1.33.0
 @tailwindcss/vite@4.3.3
-  └─ @tailwindcss/node@4.3.3        → lightningcss@1.32.0
+  └─ @tailwindcss/node@4.3.3    → lightningcss@1.32.0
 ```
 
-**影响：无。** 两个理由：
+两个理由说明它不构成约束：
 
 1. **MPL-2.0 是文件级 copyleft** —— 只要不修改 MPL 覆盖的源文件，就无需开源自己的代码；即使分发，MPL-2.0 也允许将其作为「更大作品」的一部分以任意许可证发布。
-2. **`lightningcss` 是构建期依赖** —— 它只参与 CSS 编译，**不会出现在最终产物中**，因此不构成分发行为。
+2. **`lightningcss` 是构建期依赖** —— 只参与 CSS 编译，**不出现在最终产物中**，不构成分发行为。
 
-#### ℹ️ 一个意外发现：HeroUI v3 引入了 Adobe Spectrum
+#### ℹ️ 意外发现：HeroUI v3 会拖入整套 Adobe Spectrum
 
 ```
 @heroui/react@3.2.6
@@ -93,197 +125,186 @@ vite@8.3.0                          → lightningcss@1.33.0
       └─ @react-spectrum/provider@3.11.1
 ```
 
-这条链由 HeroUI 的取色器组件引入，会带来可观的重依赖。许可证层面无害（均为 Apache-2.0），但**对「轻量」目标有影响**，建议在打包时用代码分割隔离取色器相关组件。
+这条链由 HeroUI 的取色器组件引入。许可证层面无害（均为 Apache-2.0），但**对「轻量」目标有影响** —— 建议打包时用代码分割隔离取色器相关组件。
+
+> 这个发现只有**真实安装依赖**才能看到，读声明清单不会暴露。
 
 ---
 
-## 4. 依赖分层：谁真正需要署名
+## 4. 桌面端依赖（Rust）— 626 个 crate
 
-| 分层 | 是否进入分发产物 | 需履行许可义务 |
+### 4.1 分布（按许可族归并）
+
+| crate 数 | 许可族 |
+|---:|---|
+| 371 | MIT / Apache-2.0 双许可 |
+| 141 | MIT 系 |
+| 42 | Zlib / BSL-1.0 |
+| 18 | 公共领域（Unlicense / CC0） |
+| 16 | 其他（见 [附录 B](license-audit/APPENDIX.md#附录-brust-非标准许可清单)） |
+| 12 | BSD 系 |
+| 12 | Apache-2.0 |
+| 5 | MPL-2.0 |
+| 4 | ISC / OpenSSL |
+| 3 | Unicode-3.0 / CDLA-Permissive-2.0 |
+| 1 | ⚠️ GPL 家族（**可绕开**） |
+| 1 | EPL-2.0（**可绕开**） |
+
+### 4.2 危险许可排查
+
+**全树仅 1 个 crate 触及 GPL 家族：**
+
+| crate | 声明 | 判定 |
 |---|---|---|
-| **运行时依赖**（react、heroui、zip.js、pdfjs、lucide…） | ✅ 是 | ✅ **需要** |
-| **构建期依赖**（vite、typescript、tailwindcss、lightningcss、rolldown…） | ❌ 否 | ❌ 不需要 |
-| **引擎**（foliate-js，git submodule） | ✅ 是（vendor 产物） | ✅ 需要（MIT） |
-| **Rust crate**（tauri 及插件） | ✅ 是（静态链接） | ✅ 需要 |
+| `r-efi` 7.1.0 | `MIT OR Apache-2.0 OR LGPL-2.1-or-later` | ✅ **可绕开** —— 三选一，选用 MIT 或 Apache-2.0 即可，不触发 LGPL 义务 |
 
-> 这是许可证合规的关键区分：**构建工具不会随产品分发**，其许可证（含 MPL-2.0）不约束本项目。
+`r-efi` 的来源链：`getrandom` → `r-efi`，且仅在 UEFI 目标上启用。**实际构建中不会参与。**
+
+**EPL 家族仅 1 个：**
+
+| crate | 声明 | 判定 |
+|---|---|---|
+| `uhlc` 0.9.0 | `EPL-2.0 OR Apache-2.0` | ✅ **可绕开**，且它是 `specta` 的 **optional** 依赖，默认不启用 |
+
+**结论：不存在强制性的 copyleft 传染。**
+
+### 4.3 MPL-2.0 明细与来源链
+
+这是 Rust 侧唯一需要留意的类别。**4 个 crate 是运行时依赖**，且全部由 **Tauri 自身**引入：
+
+| crate | 版本 | 引入者 | 性质 |
+|---|---|---|---|
+| `cssparser` | 0.38.0 | `tauri-utils` → `kuchikiki` / `dom_query` | 运行时 |
+| `selectors` | 0.40.0 | `tauri-utils` → `kuchikiki` / `dom_query` | 运行时 |
+| `option-ext` | 0.2.0 | `dirs` → `dirs-sys` | 运行时 |
+| `mp4parse` | 0.17.0 | `image`（**optional**） | 条件启用 |
+| `slog` | 2.8.2 | `uuid`（**optional**） | `MPL-2.0 OR MIT OR Apache-2.0`，可绕开 |
+
+**影响评估：**
+
+- MPL-2.0 是**文件级** copyleft —— 只有**修改了 MPL 覆盖的源文件**，才需要公开被修改文件；
+- 我们**不修改**这些 crate，因此**无需公开 Pitaki 的任何源码**；
+- 需履行的义务见 [§7](#7-必须履行的义务)。
+
+> 这是一处「读起来吓人、实际无害」的结果。若不实际扫描，很容易误判为需要改用 GPL 兼容许可证。
+
+### 4.4 其他非标准许可
+
+完整清单见 [附录 B](license-audit/APPENDIX.md#附录-brust-非标准许可清单)，包括：
+
+| 类型 | 代表 | 判定 |
+|---|---|---|
+| `Zlib` / `BSL-1.0` | `miniz_oxide`、`ryu` | 宽松 |
+| `Unlicense` / `CC0-1.0` | 多个 | 公共领域，无义务 |
+| `Unicode-3.0` | `icu_properties` | 宽松 |
+| `CDLA-Permissive-2.0` | 2 个 | 宽松 |
+| `BSD-2-Clause` | `rav1e`、`Inflector` | 宽松 |
+| `ISC AND (Apache-2.0 OR ISC) AND OpenSSL` | `aws-lc-sys` | 见下 |
+| `MIT-0` | `encase` | 无署名义务 |
+| `Apache-2.0 WITH LLVM-exception` | `wasi` | 宽松 |
+
+**关于 `aws-lc-sys`**：声明含 `OpenSSL` 字样，仅在启用 **aws-lc-rs** 或 **openssl-sys** 作为 TLS 后端时才会被编入。默认使用 `rustls`（`ring`，`Apache-2.0 AND ISC`）时不涉及。**建议在构建配置中显式固定 TLS 后端。**
+
+**关于 `rav1e`**：`Cargo.toml` 声明 `BSD-2-Clause`，已下载其 `LICENSE` 原文核验 —— 确为标准 BSD 2-Clause，**无附加条款**。它经 `image` → `ravif` 引入（AVIF 编码），仅在需要处理 AVIF 封面时启用。
 
 ---
 
-## 5. 为什么选 MIT
+## 5. 依赖分层：谁真正需要署名
+
+| 分层 | 进入分发产物 | 需履行许可义务 |
+|---|---|---|
+| **npm 运行时依赖**（react、heroui、zip.js、pdfjs、lucide…） | ✅ | ✅ **需要** |
+| **npm 构建期依赖**（vite、typescript、tailwindcss、lightningcss…） | ❌ | ❌ 不需要 |
+| **引擎**（foliate-js，git submodule + vendor 产物） | ✅ | ✅ 需要（MIT） |
+| **Rust crate**（tauri 及插件，静态链接） | ✅ | ✅ **需要** |
+
+> **这是许可证合规的关键区分**：构建工具不会随产品分发，其许可证（含 MPL-2.0）不约束本项目。
+
+---
+
+## 6. 为什么选 MIT
 
 | 判断项 | 结果 |
 |---|---|
-| 运行时依赖是否含 GPL / AGPL / LGPL？ | ❌ 没有 |
-| 运行时依赖是否含文件级 copyleft（MPL）？ | ❌ 没有（MPL 仅出现在构建期） |
+| 运行时依赖是否含**强制性** GPL / AGPL / LGPL？ | ❌ 没有（唯一的 GPL 家族项为三选一，可绕开） |
+| 运行时依赖是否含**会传染**的 copyleft？ | ❌ 没有（MPL-2.0 为文件级，且未修改源码） |
 | 是否要求以 copyleft 发布衍生作品？ | ❌ 不要求 |
-| 能否满足全部署名义务？ | ✅ 可以（MIT / Apache-2.0 / BSD-3 / ISC 均为**保留声明**义务，非传染） |
+| 能否满足全部署名义务？ | ✅ 可以（均为「保留声明」义务，非传染） |
 
 **因此 MIT 与全部依赖兼容。**
 
-### 5.1 MIT 之外的可选项
+### 6.1 其他可选项
 
 若希望更贴合下游使用者，也可考虑 **Apache-2.0**（含显式专利授权）。两者对本依赖树均无冲突。本项目选择 MIT 是为了**最简授权**，降低使用者的合规负担。
 
 ---
 
-## 6. 必须履行的义务
+## 7. 必须履行的义务
 
 发布产品时需随附第三方许可声明，至少覆盖：
 
-1. **MIT / ISC / BSD 系** —— 保留原始版权声明与许可证全文；
-2. **Apache-2.0 系**（`pdfjs-dist`、`react-aria` 系列、`@adobe/react-spectrum`）——
+1. **MIT / ISC / BSD / Zlib / BSL 系** —— 保留原始版权声明与许可证全文；
+2. **Apache-2.0 系**（`pdfjs-dist`、`react-aria` 系列、`@adobe/react-spectrum`、Tauri 等）——
    - 保留许可证全文；
    - 保留其 `NOTICE` 文件（如有）；
-   - 若修改过其源码，需注明修改。
-3. **`@zip.js/zip.js`（BSD-3-Clause）** —— 不得以作者名义背书衍生产品。
+   - 若修改过其源码，需注明修改；
+3. **`@zip.js/zip.js`（BSD-3-Clause）** —— 不得以作者名义为衍生产品背书；
+4. **MPL-2.0 组件**（`cssparser`、`selectors`、`option-ext`、可能的 `mp4parse`）——
+   - 保留许可证全文与版权声明；
+   - **若分发可执行形式，需告知用户如何获取这些组件的源码**。
+     由于我们未做修改，指向 crates.io 的上游版本即可满足。
 
-### 6.1 建议做法
+### 7.1 建议做法
 
 ```bash
-# 开发期生成第三方声明
-npx license-checker-rseidelsohn --production --json > third-party.json
+# 前端：生成第三方声明
 npx license-checker-rseidelsohn --production --plainVertical > THIRD-PARTY-NOTICES.md
+
+# Rust：接入 cargo-deny，禁止引入强制性 copyleft
+cargo install cargo-deny
+cargo deny init
 ```
 
-- 在 CI 中加入许可证检查，**新增 GPL/AGPL 依赖时直接失败**；
-- Rust 侧使用 `cargo-deny` / `cargo-license` 做同等检查；
-- 把 `THIRD-PARTY-NOTICES.md` 随安装包一并分发（Tauri 可在「关于」页面展示）。
+- 在 CI 中加入许可证检查 —— **新增强制性 GPL / AGPL 依赖时直接失败**；
+- 把 `THIRD-PARTY-NOTICES.md` 随安装包分发（Tauri 可在「关于」页面展示）；
+- Rust 侧用 `cargo-deny` 对**最终 `Cargo.lock`** 复核（可修正本文档的版本近似）。
 
 ---
 
-## 7. ⚠️ 特别提醒：Readest 是 AGPL-3.0
+## 8. ⚠️ 特别提醒：Readest 是 AGPL-3.0
 
 [Readest](https://github.com/readest/readest) 与 Pitaki 使用同一引擎（foliate-js），是极佳的设计参考，但：
 
-> **Readest 采用 AGPL-3.0。直接复制其代码将使 Pitaki 同样受 AGPL-3.0 约束** —— 必须开源全部源码，且网络服务使用者也需获得源码。
+> **Readest 采用 AGPL-3.0。直接复制其代码将使 Pitaki 同样受 AGPL-3.0 约束** —— 必须开源全部源码，且网络服务的使用者也需获得源码。
 
-**边界**：
+**边界：**
 
-- ✅ 参考其架构思路、阅读其文档与 issue —— 不受限；
-- ❌ 复制粘贴其**代码**（哪怕是片段） —— 受 AGPL 约束。
+- ✅ 参考其架构思路、阅读文档与 issue —— 不受限；
+- ❌ 复制粘贴其**代码**（哪怕片段） —— 受 AGPL 约束。
 
-> 相比之下，**foliate-js 本身是 MIT**，可自由使用。务必区分这两个仓库。
+> **注意区分**：`foliate-js` 本身是 **MIT**，可自由使用。AGPL 约束的是 Readest，不是引擎。
 
 ---
 
-## 8. 局限与后续
+## 9. 局限
 
 | 项 | 状态 |
 |---|---|
-| npm 依赖（101 包） | ✅ 已完成实测扫描 |
-| Rust / crates.io 依赖 | ⏳ 见 §2.2，需以最终 `Cargo.lock` 复核 |
-| 引擎 vendor 产物内部 | ⏳ `foliate-js` 自身打包了 `@zip.js/zip.js`(BSD-3) / `pdfjs-dist`(Apache-2.0) / `fflate`(MIT)，许可证与上表一致 |
-| `package.json` 的 `license` 字段可信度 | ⚠️ 该字段由作者声明，可能与包内实际 LICENSE 文件不一致。上线前建议**抽取 LICENSE 原文二次核验** |
+| npm 侧（101 包） | ✅ 已完成实测 |
+| Rust 侧（626 crate） | ✅ 已完成实测，但**版本为近似**（见 §2.2） |
+| 平台裁剪 | ⚠️ 扫描未按目标平台裁剪（含 `windows-*` / `objc2-*` / `wasm` 等），实际参与构建的子集更小 |
+| 特性门控 | ⚠️ optional 依赖可能默认不启用（如 `mp4parse`、`uhlc`、`aws-lc-sys`），实际范围更小 |
+| 声明可信度 | ⚠️ 许可证字段由作者声明，可能与包内实际 `LICENSE` 文件不一致。上线前建议抽取 LICENSE 原文二次核验 |
+| 引擎 vendor 产物 | ℹ️ `foliate-js` 自身打包了 `@zip.js/zip.js`(BSD-3) / `pdfjs-dist`(Apache-2.0) / `fflate`(MIT)，与上表一致 |
 
 ---
+## 附录与原始数据
 
-## 附录：npm 依赖完整清单
+完整清单较长，已独立成文：
 
-共 **101** 个包，其中**运行时 59 个**、构建期 42 个。
-
-> `层级` 由 `npm ls --omit=dev` 的依赖图推导，并做了一处人工修正：`tailwindcss` 是 `@heroui/styles` 的 **peerDependency**（仅构建期使用），已归入构建期。
-
-| 许可证 | 包 | 版本 | 层级 |
-|---|---|---|---|
-| `MIT` | `@babel/runtime` | 7.29.7 | **运行时** |
-|  | `@heroui/react` | 3.2.6 | **运行时** |
-|  | `@heroui/styles` | 3.2.6 | **运行时** |
-|  | `@jridgewell/gen-mapping` | 0.3.13 | 构建期 |
-|  | `@jridgewell/remapping` | 2.3.5 | 构建期 |
-|  | `@jridgewell/resolve-uri` | 3.1.2 | 构建期 |
-|  | `@jridgewell/sourcemap-codec` | 1.6.0 | 构建期 |
-|  | `@jridgewell/trace-mapping` | 0.3.31 | 构建期 |
-|  | `@napi-rs/canvas` | 0.1.100 | 构建期 |
-|  | `@napi-rs/canvas-linux-arm64-gnu` | 0.1.100 | 构建期 |
-|  | `@oxc-project/types` | 0.150.0 | 构建期 |
-|  | `@radix-ui/primitive` | 1.1.7 | **运行时** |
-|  | `@radix-ui/react-avatar` | 1.2.6 | **运行时** |
-|  | `@radix-ui/react-compose-refs` | 1.1.5 | **运行时** |
-|  | `@radix-ui/react-context` | 1.2.2 | **运行时** |
-|  | `@radix-ui/react-primitive` | 2.1.10 | **运行时** |
-|  | `@radix-ui/react-slot` | 1.3.3 | **运行时** |
-|  | `@radix-ui/react-use-callback-ref` | 1.1.4 | **运行时** |
-|  | `@radix-ui/react-use-is-hydrated` | 0.1.3 | **运行时** |
-|  | `@radix-ui/react-use-layout-effect` | 1.1.4 | **运行时** |
-|  | `@rolldown/binding-linux-arm64-gnu` | 1.2.9 | 构建期 |
-|  | `@rolldown/pluginutils` | 1.0.1 | 构建期 |
-|  | `@tailwindcss/node` | 4.3.3 | 构建期 |
-|  | `@tailwindcss/oxide` | 4.3.3 | 构建期 |
-|  | `@tailwindcss/oxide-linux-arm64-gnu` | 4.3.3 | 构建期 |
-|  | `@tailwindcss/vite` | 4.3.3 | 构建期 |
-|  | `@vitejs/plugin-react` | 6.1.1 | 构建期 |
-|  | `aria-hidden` | 1.2.6 | **运行时** |
-|  | `client-only` | 0.0.1 | **运行时** |
-|  | `clsx` | 2.1.1 | **运行时** |
-|  | `csstype` | 3.2.3 | **运行时** |
-|  | `dom-helpers` | 5.2.1 | **运行时** |
-|  | `enhanced-resolve` | 5.25.1 | 构建期 |
-|  | `fdir` | 6.5.0 | 构建期 |
-|  | `fflate` | 0.8.3 | **运行时** |
-|  | `input-otp` | 1.5.0 | **运行时** |
-|  | `jiti` | 2.7.0 | 构建期 |
-|  | `js-tokens` | 4.0.0 | **运行时** |
-|  | `loose-envify` | 1.4.0 | **运行时** |
-|  | `magic-string` | 0.30.21 | 构建期 |
-|  | `nanoid` | 3.3.19 | 构建期 |
-|  | `node-readable-to-web-readable-stream` | 0.4.2 | 构建期 |
-|  | `object-assign` | 4.1.1 | **运行时** |
-|  | `picomatch` | 4.0.7 | 构建期 |
-|  | `postcss` | 8.5.28 | 构建期 |
-|  | `prop-types` | 15.8.1 | **运行时** |
-|  | `react` | 19.3.0 | **运行时** |
-|  | `react-dom` | 19.3.0 | **运行时** |
-|  | `react-is` | 16.13.1 | **运行时** |
-|  | `rolldown` | 1.2.9 | 构建期 |
-|  | `scheduler` | 0.28.0 | **运行时** |
-|  | `tailwind-variants` | 3.3.1 | **运行时** |
-|  | `tailwindcss` | 4.3.3 | 构建期 |
-|  | `tapable` | 2.3.3 | 构建期 |
-|  | `tinyglobby` | 0.2.17 | 构建期 |
-|  | `tw-animate-css` | 1.4.0 | **运行时** |
-|  | `use-sync-external-store` | 1.7.0 | **运行时** |
-|  | `vite` | 8.3.0 | 构建期 |
-|  | `vscode-jsonrpc` | 9.0.0 | 构建期 |
-|  | `zustand` | 5.0.15 | **运行时** |
-| `Apache-2.0` | `@adobe/react-spectrum` | 3.47.5 | **运行时** |
-|  | `@adobe/react-spectrum-ui` | 1.2.1 | **运行时** |
-|  | `@adobe/react-spectrum-workflow` | 2.3.5 | **运行时** |
-|  | `@internationalized/date` | 3.12.4 | **运行时** |
-|  | `@internationalized/number` | 3.6.8 | **运行时** |
-|  | `@internationalized/string` | 3.2.10 | **运行时** |
-|  | `@react-aria/color` | 3.2.1 | **运行时** |
-|  | `@react-aria/ssr` | 3.10.1 | **运行时** |
-|  | `@react-aria/utils` | 3.34.1 | **运行时** |
-|  | `@react-spectrum/color` | 3.2.1 | **运行时** |
-|  | `@react-spectrum/provider` | 3.11.1 | **运行时** |
-|  | `@react-stately/color` | 3.10.1 | **运行时** |
-|  | `@react-stately/utils` | 3.12.1 | **运行时** |
-|  | `@react-types/color` | 3.2.0 | **运行时** |
-|  | `@react-types/shared` | 3.36.1 | **运行时** |
-|  | `@spectrum-icons/ui` | 3.7.2 | **运行时** |
-|  | `@spectrum-icons/workflow` | 4.3.2 | **运行时** |
-|  | `@swc/helpers` | 0.5.23 | **运行时** |
-|  | `@typescript/typescript-linux-arm64` | 7.0.2 | 构建期 |
-|  | `detect-libc` | 2.1.2 | 构建期 |
-|  | `pdfjs-dist` | 5.5.207 | 构建期 |
-|  | `react-aria` | 3.52.1 | **运行时** |
-|  | `react-aria-components` | 1.21.1 | **运行时** |
-|  | `react-stately` | 3.50.0 | **运行时** |
-|  | `typescript` | 7.0.2 | 构建期 |
-| `MPL-2.0` | `lightningcss` | 1.33.0 | 构建期 |
-|  | `lightningcss` | 1.32.0 | 构建期 |
-|  | `lightningcss-linux-arm64-gnu` | 1.33.0 | 构建期 |
-|  | `lightningcss-linux-arm64-gnu` | 1.32.0 | 构建期 |
-| `Apache-2.0 OR MIT` | `@tauri-apps/api` | 2.11.1 | **运行时** |
-|  | `@tauri-apps/cli` | 2.11.4 | 构建期 |
-|  | `@tauri-apps/cli-linux-arm64-gnu` | 2.11.4 | 构建期 |
-| `BSD-3-Clause` | `@zip.js/zip.js` | 2.15.0 | **运行时** |
-|  | `react-transition-group` | 4.4.5 | **运行时** |
-|  | `source-map-js` | 1.2.1 | 构建期 |
-| `ISC` | `graceful-fs` | 4.2.11 | 构建期 |
-|  | `lucide-react` | 1.47.0 | **运行时** |
-|  | `picocolors` | 1.1.1 | 构建期 |
-| `MIT OR Apache-2.0` | `@tauri-apps/plugin-fs` | 2.5.2 | **运行时** |
-|  | `@tauri-apps/plugin-sql` | 2.4.1 | **运行时** |
-| `0BSD` | `tslib` | 2.8.1 | **运行时** |
+| 文件 | 内容 |
+|---|---|
+| [license-audit/APPENDIX.md](license-audit/APPENDIX.md) | npm（101 包）与 Rust（626 crate）的逐条清单 |
+| [license-audit/npm-packages.json](license-audit/npm-packages.json) | npm 扫描原始数据 |
+| [license-audit/rust-crates.json](license-audit/rust-crates.json) | Rust 扫描原始数据 |
+| [scripts/license-audit/](../scripts/license-audit/) | 扫描器源码（可复现） |

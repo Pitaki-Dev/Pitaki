@@ -11,7 +11,7 @@
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | Phase 0 | 技术选型与可行性验证 | ✅ 已完成 |
-| Phase 0 | 依赖与许可证审计 | 🔄 npm 已完成，Rust 待复核 |
+| Phase 0 | 依赖与许可证审计 | ✅ 已完成 |
 | Phase 1 | 工程骨架 | 📋 待开始 |
 | Phase 2 | 界面基础 | 📋 规划中 |
 | Phase 3 | 引擎接入 | 📋 规划中 |
@@ -27,7 +27,8 @@
 - [x] 技术选型与版本实测（对照 npm registry / crates.io / 上游源码）
 - [x] 引擎能力核实（格式支持、API、限制）
 - [x] npm 依赖许可证审计（101 包实测）→ [LICENSING.md](LICENSING.md)
-- [ ] Rust / crates.io 依赖许可证复核（需 `Cargo.lock`）
+- [x] Rust / crates.io 依赖许可证审计（626 crate 实测）
+- [ ] 以最终 `Cargo.lock` + `cargo-deny` 复核（见 Phase 5）
 - [x] 架构分层定稿 → [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ## Phase 1 — 工程骨架
@@ -61,6 +62,7 @@
 ## Phase 5 — 本地存储
 
 - [ ] `tauri-plugin-sql` 接入与数据库迁移 → [DATA-MODEL.md](DATA-MODEL.md)
+- [ ] CI 接入 `cargo-deny` 与 npm 许可证检查，锁死 copyleft 回流 → [LICENSING.md](LICENSING.md)
 - [ ] Zustand ↔ SQLite 双向同步（含失败回滚）
 - [ ] 书库管理：导入 / 删除 / 封面
 
