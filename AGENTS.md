@@ -1,0 +1,283 @@
+# AGENTS.md — Pitaki 开发指南（面向 AI 编码助手）
+
+> 你正在接手一个**只有文档、零代码**的项目。本文件是你的上下文来源与执行手册。
+> 读完本文件 + [§2 必读文件](#2-必读文件按顺序读完即停) 即可开工，**不要通读整个仓库**。
+
+---
+
+## 1. 30 秒理解项目
+
+**Pitaki** 是一个本地优先（local-first）的跨平台电子书阅读器：桌面端用 **Tauri v2**，
+Web 端用同一份 Vite 静态构建。阅读引擎是 **foliate-js**。
+
+**当前状态：Pre-alpha —— 没有一行代码。** 只有经过实测验证的技术方案文档。
+
+**你的任务：从「验证引擎能否落地」开始，逐步把它变成可运行的项目。**
+
+---
+
+## 2. 必读文件（按顺序，读完即停）
+
+| # | 文件 | 读什么 | 约 |
+|---|---|---|---|
+| 1 | [`README.md`](README.md) | 全部 | 180 行 |
+| 2 | [`docs/ENGINE.md`](docs/ENGINE.md) | **§3 构建 Vendor 产物** + §4 §5 | 主要看 §3 |
+| 3 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | §1 分层总览 + §2 为什么这样分层 | 前 80 行 |
+| 4 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | 全部（阶段划分） | 90 行 |
+| 5 | [`docs/TAURI.md`](docs/TAURI.md) | §1 §2 §3（ACL / CSP / 安全上下文） | 前 60 行 |
+
+**按需查阅，不要预读：**
+
+- `docs/THEMING.md` —— 只在做主题相关工作时读
+- `docs/DATA-MODEL.md` —— 只在做存储工作时读
+- `docs/RISKS.md` —— 遇到具体问题时查
+- `docs/LICENSING.md` —— 只在新增依赖时查
+
+---
+
+## 3. 不可违反的规则
+
+这些是**已经踩过的坑**，违反会导致返工或方案失效。全部有实测依据。
+
+| # | 规则 | 原因 |
+|---|---|---|
+| R1 | **ZIP 解压必须用 `@zip.js/zip.js`，绝不用 fflate 顶替** | zip.js 是唯一支持 `File` 随机访问的库，是「不整体载入内存」的基础。fflate 在 foliate-js 里**只**用于 MOBI 字体解压（`unzlibSync`） |
+| R2 | **foliate-js 只能用 git submodule，禁止 `npm i foliate-js`** | npm 上那个包是第三方发布、已停更；上游 README 明确要求 submodule |
+| R3 | **PDF 是「构建期 vendor」，不是运行时 `import('pdfjs-dist')`** | 引擎通过 `globalThis.pdfjsLib` 使用它 |
+| R4 | **PDF 的 `cmaps/` 和 `standard_fonts/` 必须一起拷贝** | 缺 `cmaps` 会让**中文 PDF 乱码** |
+| R5 | **`pdfjs-dist` 精确锁 `5.5.207`，不带 `^`** | 引擎内部依赖该版本；6.x 有兼容风险 |
+| R6 | **HeroUI 的 CSS 变量控制不了书页正文** | 书页在嵌套 iframe 内，必须走 `renderer.setStyles()` + `::part(filter)` |
+| R7 | **`relocate` 事件必须节流** | 滚动模式下每帧触发，直接写 SQLite 会打爆 IO |
+| R8 | **Tauri v2 的 capabilities 不配，插件调用直接失败** | v2 与 v1 最大的差异；CSP 还必须放行 `blob:` |
+| R9 | **Rust 锁 `1.98.1`，不要用 `1.98.0`** | 1.98.0 有 vtable 误编译缺陷（rust-lang/rust#161441） |
+| R10 | **不要改许可证（Apache-2.0），不要引入强制性 GPL/AGPL 依赖** | 已完成合规审计；新增 GPL 依赖会破坏整个许可方案 |
+| R11 | **不要把引擎源码复制进 `src/`** | `view.js` 用相对路径 `./vendor/zip.js` 解析，目录结构必须保持 |
+| R12 | **不要「顺手」重构文档或重命名目录** | 文档是经过实测的，改动需先说明理由 |
+
+---
+
+## 4. 环境与版本（已锁定）
+
+```
+Node        ≥ 20（实测 22.23.2）
+pnpm        9.15.9（或 npm / yarn / bun）
+Rust        1.98.1（rust-toolchain.toml 已锁定）
+Tauri       v2 稳定线（3.0.0-alpha 已发布，不要用）
+gh CLI      已登录，账号 Pitaki-Dev
+git 身份    Maicy0609 <215234680+Pitaki-Dev@users.noreply.github.com>
+```
+
+**前端版本（实测于 2026-09）：**
+
+```
+react / react-dom          ^19.3.0
+@heroui/react              ^3.2.6
+@heroui/styles             ^3.2.6   ← HeroUI v3 不需要 Provider
+tailwindcss                ^4.3.3
+@tailwindcss/vite          ^4.3.3
+zustand                    ^5.0.15
+@zip.js/zip.js             ^2.15.0
+fflate                     ^0.8.3
+lucide-react               ^1.47.0
+vite                       ^8.3.0
+@vitejs/plugin-react       ^6.1.1
+typescript                 ^7.0.2
+@tauri-apps/cli            ^2.11.4
+@tauri-apps/api            ^2.11.1
+@tauri-apps/plugin-fs      ^2.5.2
+@tauri-apps/plugin-sql     ^2.4.1
+pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
+```
+
+> ⚠️ HeroUI v3 会经 `@react-types/color` 拖入整个 **Adobe Spectrum**。
+> 打包时对取色器相关组件做代码分割，否则「轻量」目标会落空。
+
+---
+
+## 5. 分步执行计划
+
+> **铁律：一次只做一个 Step，做完停下来汇报，等确认再继续。**
+> 不要一口气推进多个阶段。
+
+---
+
+### Step 0 — 引擎可行性验证 spike（最高优先级）
+
+**为什么先做这个**：整个方案里唯一还没被实证的一环就是「zip.js 随机访问 + pdfjs vendor 产物能否真正跑通」。
+**如果这步失败，后面的骨架搭了也是白搭。**
+
+在 `spike/` 目录（加入 `.gitignore`）做一个**一次性验证**，不追求工程质量。
+
+#### 要做的事
+
+1. **复制引擎到能跑的位置**，保持上游目录结构：
+   ```
+   public/foliate/
+   ├── view.js  epub.js  mobi.js  pdf.js  ...   ← submodule 内容整体拷贝
+   └── vendor/
+       ├── zip.js          ← rollup 打包 @zip.js/zip.js
+       ├── fflate.js       ← rollup 打包 fflate（仅 export { unzlibSync }）
+       └── pdfjs/
+           ├── pdf.mjs
+           ├── pdf.worker.mjs
+           ├── text_layer_builder.css
+           ├── annotation_layer_builder.css
+           ├── cmaps/
+           └── standard_fonts/
+   ```
+   **注意**：`view.js` 用 `await import('./vendor/zip.js')`（相对自身），
+   `pdf.js` 用 `new URL('vendor/pdfjs/...', import.meta.url)`。
+   所以 `vendor/` 必须与 `view.js` / `pdf.js` **同级**，否则 404。
+
+2. **两个打包入口**（参考上游 `rollup.config.js`）：
+   ```js
+   // zip 入口
+   export { configure, ZipReader, BlobReader, TextWriter, BlobWriter } from '@zip.js/zip.js'
+   // fflate 入口
+   export { unzlibSync } from 'fflate'
+   ```
+
+3. **拷贝 pdfjs 资源**：`pdf.mjs`、`pdf.worker.mjs`、`cmaps/`、`standard_fonts/`，
+   以及从 pdf.js 仓库 tag **v5.5.207** 取 `web/text_layer_builder.css` 与 `web/annotation_layer_builder.css`。
+
+4. **用 Vite 起一个最小页面**，跑三个验证：
+
+   | 验证 | 方法 | 通过标准 |
+   |---|---|---|
+   | **A. ZIP 随机访问** | 用一个 `Proxy` 包住 `File`，统计实际读取的字节数 | 打开一个 >10MB 的 EPUB 时，**读取字节数远小于文件大小**（证明没有整体载入） |
+   | **B. 中文 PDF** | 打开一个**含中文**的 PDF | 文字正常显示、可选中，**无方块/乱码**（证明 `cmaps` 生效） |
+   | **C. iframe + blob 渲染** | 打开 EPUB，检查章节是否渲染 | 正文可见、可翻页，控制台无 CSP 报错 |
+
+5. **记录证据**：截图或日志，尤其 A 的字节数对比与 B 的文字选中情况。
+
+#### 完成标准（DoD）
+
+- [ ] 三个验证全部通过，或**明确指出哪一项失败及原因**
+- [ ] 记下 `public/vendor/foliate/` 的**产物体积**
+- [ ] 记下实际可用的加载路径（`/foliate/view.js` 能否被 Vite dev server 正常解析）
+- [ ] spike 代码已在 `spike/` 下且被 gitignore
+- [ ] 向用户汇报，**等待确认后再进 Step 1**
+
+#### 🛑 失败时的处理
+
+任一验证失败 → **立即停止，不要继续搭骨架**。把以下信息一并汇报：
+
+- 完整报错 / 控制台输出
+- 你已排除的可能
+- 你判断的根因
+- 建议的替代方案（例如 PDF 推迟到 Phase 7）
+
+---
+
+### Step 1 — 工程骨架
+
+- [ ] `pnpm create tauri-app`（或手动初始化）：Vite + React + TS + Tauri v2
+- [ ] 落地第 4 节的依赖版本（不要用脚手架默认的旧版）
+- [ ] `rust-toolchain.toml` 已在仓库根，确认生效
+- [ ] 配置 `src-tauri/tauri.conf.json`：
+  - **CSP**：放行 `blob:`（`frame-src` / `worker-src` / `img-src`）、`style-src 'unsafe-inline'`
+  - 参考 `docs/TAURI.md` §2
+- [ ] 配置 `src-tauri/capabilities/default.json`：`core:default`、`fs:allow-read-file`、`fs:allow-write-file`、`dialog:default`、`sql:default`
+- [ ] 把 Step 0 的 vendor 构建固化成 `scripts/build-foliate-vendor.mjs`
+- [ ] 把引擎同步固化成 `scripts/sync-foliate.mjs`（或 `postinstall`）
+- [ ] `git submodule add https://github.com/johnfactotum/foliate-js third_party/foliate-js` 并**锁定 commit**
+- [ ] CI：`tsc --noEmit` + `vite build` + vendor 构建
+
+**DoD**：`pnpm tauri:dev` 能启动空白窗口，控制台无报错；`pnpm build:vendor` 能重复产出一致的 vendor 产物。
+
+---
+
+### Step 2 — UI 基础
+
+- [ ] HeroUI v3 + Tailwind v4 接入，`globals.css` 中 `@import "tailwindcss";` **必须在 `@import "@heroui/styles";` 之前**
+- [ ] 在 `@layer base` 里定义**完整**的外壳主题 token（不要只改 `--background`/`--foreground`）
+- [ ] 自写轻量路由（**不要引 React Router**）+ 三页骨架：书库 / 阅读器 / 设置
+
+**DoD**：三个页面可切换；主题切换生效；`<Button>` 组件样式正常（证明 HeroUI 接入成功）。
+
+---
+
+### Step 3 — 引擎接入
+
+- [ ] 实现 **L2 适配层** `src/lib/reader/foliate/adapter.ts` —— **全项目唯一允许 import 引擎的地方**
+- [ ] 打通 `open()` + `relocate` + `load`
+- [ ] L3 订阅 `load` 事件做书页样式注入
+
+**DoD**：能从本地选一个 EPUB 并在 App 里翻页阅读。
+
+---
+
+### Step 4 — 阅读体验
+
+- [ ] 进度保存（**必须按 `reason` 节流**，见 `docs/ENGINE.md` §7）
+- [ ] 书页主题：`renderer.setStyles()` + `foliate-view::part(filter)`
+- [ ] 分页/滚动切换（分页器**只有 `setAttribute` API**，无 JS 属性）
+- [ ] 字体/字号/行距/边距面板
+
+**DoD**：改字号后关闭再打开，进度能恢复到同一处。
+
+---
+
+### Step 5+ — 见 [`docs/ROADMAP.md`](docs/ROADMAP.md)
+
+存储 / 批注 / 搜索 / 扩展。
+
+---
+
+## 6. 汇报格式（每个 Step 结束时）
+
+保持简短，**不要贴大段代码**：
+
+```
+## Step N — <名称>  [完成 / 阻塞]
+
+**做了什么**：2–3 句
+**验证结果**：命令 + 实际输出（关键行）
+**与预期的偏差**：有/无，是什么
+**新增/修改的文件**：列表
+**下一步建议**：1 句
+**需要你决策的**：有/无
+```
+
+---
+
+## 7. 上下文管理纪律
+
+本项目的目标是**避免上下文耗尽**，请遵守：
+
+1. **不要通读仓库**。只读 [§2](#2-必读文件按顺序读完即停) 列出的文件。
+2. **不要重复读同一个文件**。需要时用搜索定位具体段落。
+3. **不要贴大段文件内容回对话**。引用时只写「文件:行号」。
+4. **一次一个 Step**，做完汇报，不要连续推进。
+5. **写代码前先列计划**（3–5 行即可），确认后再动手。
+6. **长任务用文件承载状态**：进展写进 `NOTES.md`（gitignore 或提交均可），不要靠对话记忆。
+7. **遇到不确定就停下来问**，不要猜。
+8. 修改代码时用**精准编辑**，不要整文件重写。
+
+---
+
+## 8. 关键速查
+
+**引擎 API 的完整清单** → [`docs/ENGINE.md`](docs/ENGINE.md) §5
+**Tauri 权限/CSP 的完整配置** → [`docs/TAURI.md`](docs/TAURI.md) §1 §2
+**SQLite 表结构的完整 DDL** → [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) §1
+**主题两套机制的完整示例** → [`docs/THEMING.md`](docs/THEMING.md)
+
+**规划中但未实现** —— 不要在文档或 UI 里宣称已支持：
+PDF（实验性）、书签/高亮/笔记、全文搜索、云同步、OPDS、TTS。
+
+**明确不支持**：DRM 保护的书籍、CBR（RAR）、混合版式。
+
+---
+
+## 9. 第一条回复应该是什么
+
+读完本文件与 [§2](#2-必读文件按顺序读完即停) 后，**先不要写代码**。
+用不超过 15 行回复：
+
+1. 你对项目的一句话理解；
+2. 你打算怎么执行 **Step 0**（具体到要跑哪些命令、验证什么）；
+3. 你需要的输入（例如：测试用的 EPUB / 含中文的 PDF 样本，是否已有？）；
+4. 任何你认为本文件没说清的地方。
+
+**等用户确认后再动手。**
