@@ -1,0 +1,34 @@
+# ---- Node / 前端 ----
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+.eslintcache
+*.tsbuildinfo
+coverage/
+
+# ---- 环境变量 ----
+.env
+.env.*
+!.env.example
+
+# ---- Tauri / Rust ----
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# ---- 引擎 vendor 产物（由 scripts/build-foliate-vendor.mjs 生成，不入库）----
+public/vendor/foliate/
+public/foliate/
+
+# ---- 第三方源码（git submodule 管理）----
+third_party/foliate-js/
+
+# ---- 编辑器 / 系统 ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
