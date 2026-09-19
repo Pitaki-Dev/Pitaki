@@ -49,8 +49,12 @@ const { configure, ZipReader, BlobReader, TextWriter, BlobWriter } =
 
 因此 `vendor/` 必须位于 `view.js` 的同级目录。两种可行方案：
 
-- **方案 A（推荐）**：`third_party/foliate-js/` 保留上游完整目录结构，构建时整体拷到 `public/foliate/`，运行时从 `/foliate/view.js` 动态 import —— 天然满足相对路径；
-- **方案 B**：改动 `view.js` 中这两行 `import` 为绝对 URL。缺点是引入对上游文件的本地 patch，升级时需重新处理。
+- **方案 A（已实测采用）**：`third_party/foliate-js/` 保留上游完整目录结构，构建时整体拷到 `public/foliate/`，
+  运行时用 `<script type="module" src="/foliate/view.js">` 让**浏览器原生解析**，再
+  `await customElements.whenDefined('foliate-view')` —— 天然满足相对路径。
+  ⚠️ 注意：**不能**用 `import('/foliate/view.js')`，Vite 8 明确禁止 import `public/` 下的 JS，详见 [ENGINE.md §3.4](ENGINE.md#34-与-vite-的配合)；
+- **方案 B（未采用）**：把引擎移出 `public/`（如 `src/foliate/`）进入 Vite 模块图。
+  代价是破坏上游目录结构，与 R11 冲突。
 
 ### 2.2 L2 适配层是唯一防线
 

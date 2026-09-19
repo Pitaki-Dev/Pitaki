@@ -68,6 +68,9 @@
 
 ## Phase 6 — 功能完善
 
+- [ ] 纯文本（TXT）导入 —— 引擎支持自定义实现 `book` 接口（上游 README 明示），
+      Readest 已有先例；**难点是把大文件切分成多个 section**
+      （单个 10 MB 文本作为一个 section 会不可用），不是格式解析本身
 - [ ] 书签 / 高亮 / 笔记（Overlayer）
 - [ ] 全文搜索（引擎自带 `search.js`）
 - [ ] 多格式回归验证（EPUB / AZW3 / CBZ / 中文 PDF）

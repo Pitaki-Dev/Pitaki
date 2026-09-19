@@ -53,6 +53,7 @@ Web 端用同一份 Vite 静态构建。阅读引擎是 **foliate-js**。
 | R10 | **不要改许可证（Apache-2.0），不要引入强制性 GPL/AGPL 依赖** | 已完成合规审计；新增 GPL 依赖会破坏整个许可方案 |
 | R11 | **不要把引擎源码复制进 `src/`** | `view.js` 用相对路径 `./vendor/zip.js` 解析，目录结构必须保持 |
 | R12 | **不要「顺手」重构文档或重命名目录** | 文档是经过实测的，改动需先说明理由 |
+| R13 | **vendor 打包入口必须用相对路径 `lib/zip-core.js`** | 用包根会让产物从 36 KB 涨到 122 KB；用裸规格符会被 exports 映射到 WASM 变体 |
 
 > ℹ️ **R3 / R4 / R5 属于 PDF 相关约束**。PDF 已推迟到 Phase 7，
 > **当前 Step 0 / Step 1 不涉及**，做到 PDF 时再启用这三条。
@@ -143,14 +144,24 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
    **注意**：`view.js` 用 `await import('./vendor/zip.js')`（相对自身），
    所以 `vendor/` 必须与 `view.js` **同级**，否则 404。
 
-2. **两个打包入口**（参考上游 `rollup.config.js`）：
+2. **两个打包入口** —— ⚠️ **zip 入口必须用相对路径**，否则产物大 3.3 倍：
 
    ```js
-   // zip 入口
-   export { configure, ZipReader, BlobReader, TextWriter, BlobWriter } from '@zip.js/zip.js'
+   // zip 入口：相对路径，绕过 package.json 的 exports 映射
+   export { configure, ZipReader, BlobReader, TextWriter, BlobWriter }
+       from '../node_modules/@zip.js/zip.js/lib/zip-core.js'
+
    // fflate 入口
    export { unzlibSync } from 'fflate'
    ```
+
+   | 写法 | 解析到 | 产物体积 |
+   |---|---|---|
+   | `from '@zip.js/zip.js'` | 包根 `index.js`（完整构建） | **122 KB** ❌ |
+   | `from '@zip.js/zip.js/lib/zip-core.js'` | exports → `zip-core-wasm.js`（WASM 变体） | 不可控 ⚠️ |
+   | **相对路径 → `lib/zip-core.js`** | 仅 `zip-core-base.js` | **36 KB** ✅ |
+
+   **体积断言**：产物应 ≈ 36 KB，明显超出即说明入口写错了。
 
 3. **用 Vite 起一个最小页面**，跑两个验证：
 
@@ -187,8 +198,9 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 - [ ] 两个验证全部通过，或**明确指出哪一项失败及原因**
 - [ ] 确认打开 EPUB 时**没有**把整个文件读进内存（A 的实测数据）
-- [ ] 记下 `spike/public/vendor/foliate/` 的**产物体积**
-- [ ] 记下实际可用的加载路径（`/foliate/view.js` 能否被 Vite dev server 正常解析）
+- [ ] 记下产物体积（实际路径是 `spike/public/foliate/vendor/`），并用 **≈36 KB** 对 `zip.js` 做断言
+- [ ] 确认加载路径：**`import()` 必定失败**（Vite 禁 import `public/` 下的 JS），
+      必须用 `<script type="module" src="/foliate/view.js">` + `customElements.whenDefined('foliate-view')`
 - [ ] 记下所用 **foliate-js 的 commit hash**
 - [ ] 结论写入 **`docs/SPIKE-FINDINGS.md` 并提交**（spike 代码本身丢弃即可）
 - [ ] 向用户汇报，**等待确认后再进 Step 1**
@@ -239,7 +251,9 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 ### Step 3 — 引擎接入
 
 - [ ] 实现 **L2 适配层** `src/lib/reader/foliate/adapter.ts` —— **全项目唯一允许 import 引擎的地方**
-- [ ] 打通 `open()` + `relocate` + `load`
+- [ ] 打通 `open()` → **`init()`** → `relocate` / `load`
+      （⚠️ **`open()` 后必须调 `init()`，否则不渲染任何章节**，见 [ENGINE.md §4](docs/ENGINE.md)）
+- [ ] 适配层包平 `goTo` 的两层签名，对外只暴露 `goToIndex` / `goToCFI` / `goToFraction`
 - [ ] L3 订阅 `load` 事件做书页样式注入
 
 **DoD**：能从本地选一个 EPUB 并在 App 里翻页阅读。
