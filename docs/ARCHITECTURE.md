@@ -85,16 +85,14 @@ Pitaki/
 │   ├── build-foliate-vendor.mjs    # 生成 public/vendor/foliate/*
 │   └── sync-foliate.mjs            # 同步引擎到 public/foliate/
 ├── public/
-│   ├── foliate/                    # 引擎副本（保留原目录结构）
-│   └── vendor/
-│       └── foliate/
+│   └── foliate/                    # 引擎副本（保留上游目录结构）
+│       ├── view.js  epub.js  mobi.js  fb2.js  ...
+│       └── vendor/                 # ★ 必须与 view.js 同级（相对路径解析）
 │           ├── zip.js              # @zip.js/zip.js 打包产物
 │           ├── fflate.js           # fflate 打包产物（仅 unzlibSync）
-│           └── pdfjs/
+│           └── pdfjs/              # Phase 7（PDF 已推迟）
 │               ├── pdf.mjs
 │               ├── pdf.worker.mjs
-│               ├── text_layer_builder.css
-│               ├── annotation_layer_builder.css
 │               ├── cmaps/          # ★ 中文 PDF 必需
 │               └── standard_fonts/
 ├── src/

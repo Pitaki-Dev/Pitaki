@@ -47,15 +47,18 @@ foliate-js 依赖 `vendor/` 下的构建产物。
 
 ### 3.1 产物清单
 
+> 路径均相对 `public/`。引擎与 `vendor/` 是**同一层**（`public/foliate/vendor/`），
+> 因为 `view.js` 用 `./vendor/zip.js` 相对自身解析。
+
 | 文件 | 来源 | 用途 |
 |---|---|---|
-| `vendor/foliate/zip.js` | `@zip.js/zip.js` 打包 | EPUB/CBZ 容器解压（**随机访问**） |
-| `vendor/foliate/fflate.js` | `fflate` 打包 | MOBI/KF8 **字体**解压（`unzlibSync`） |
-| `vendor/foliate/pdfjs/pdf.mjs` | `pdfjs-dist/build/` | PDF 渲染 |
-| `vendor/foliate/pdfjs/pdf.worker.mjs` | `pdfjs-dist/build/` | PDF Worker |
-| `vendor/foliate/pdfjs/cmaps/` | `pdfjs-dist/cmaps/` | ★ **中文 PDF 必需** |
-| `vendor/foliate/pdfjs/standard_fonts/` | `pdfjs-dist/standard_fonts/` | 标准字体 |
-| `vendor/foliate/pdfjs/*.css` | pdf.js 仓库对应 tag | 文本层 / 标注层样式 |
+| `foliate/vendor/zip.js` | `@zip.js/zip.js` 打包 | EPUB/CBZ 容器解压（**随机访问**） |
+| `foliate/vendor/fflate.js` | `fflate` 打包 | MOBI/KF8 **字体**解压（`unzlibSync`） |
+| `foliate/vendor/pdfjs/pdf.mjs` | `pdfjs-dist/build/` | PDF 渲染 |
+| `foliate/vendor/pdfjs/pdf.worker.mjs` | `pdfjs-dist/build/` | PDF Worker |
+| `foliate/vendor/pdfjs/cmaps/` | `pdfjs-dist/cmaps/` | ★ **中文 PDF 必需** |
+| `foliate/vendor/pdfjs/standard_fonts/` | `pdfjs-dist/standard_fonts/` | 标准字体 |
+| `foliate/vendor/pdfjs/*.css` | pdf.js 仓库对应 tag | 文本层 / 标注层样式 |
 
 ### 3.2 打包入口
 
@@ -88,7 +91,19 @@ export { configure, ZipReader, BlobReader, TextWriter, BlobWriter }
 export { unzlibSync } from 'fflate'
 ```
 
-**CI 断言**：`zip.js` 产物应 ≈ **36 KB**。若明显超出，说明入口被改回了包根。
+**体积观测值（同入口，不同版本）**：
+
+| zip.js 版本 | 包根入口 | 瘦入口（本方案） |
+|---|---|---|
+| 2.8.22（上游 lockfile 锁的版本） | 122,262 B | **36,512 B**（与上游预构建逐字节一致） |
+| 2.15.0（本项目使用） | 122,036 B | **59,058 B** |
+
+体积差异来自版本本身：2.15.0 的 `lib/core` 比 2.8.22 大约 1.33×（`zip-reader.js` 38K→75K、`zip-writer.js` 60K→97K）。
+
+> ⚠️ **不要把「≈36 KB」写死成断言**。实测同一入口在不同打包器下差异可达 1.6×
+> （esbuild 对 2.15.0 给出 96,472 B，rollup 给出 59,058 B —— rollup 的 tree-shaking 更激进）。
+> **真正的保护是「入口守卫」**（检查入口文件是否仍指向 `lib/zip-core.js`），
+> 体积断言只作为宽松兜底（如 ≤96 KiB），避免版本升级时误报。
 
 > **为什么不直接用上游预构建的 `vendor/zip.js`**：
 > 上游用 `@zip.js/zip.js@^2.7.52` 构建，我们用 `2.15.0`。
@@ -234,6 +249,55 @@ view.addEventListener('load', (e: CustomEvent) => {
 > `relocate` 的 detail 结构已在源码 `progress.js` + `view.js` 中核实：
 > `lastLocation = { ...progress, tocItem, pageItem, cfi, range }`，
 > 其中 `progress = { fraction, section, location }`，并附带 `reason`。
+
+---
+
+### 4.1 ⚠️ 取书路径：浏览器与 Tauri 完全不同（核心前提）
+
+**这是全项目最容易丢掉「不整体载入内存」这一卖点的地方。**
+
+浏览器里用 `<input type=file>` 拿到的是**真实的 OS 文件句柄**，`slice()` 走磁盘，
+所以 Step 0 验证的随机访问成立。**但 Tauri 里拿不到这种 File**，
+必须自己造一个，于是出现三种路径：
+
+| 路径 | 是否保真「不整体载入内存」 | 说明 |
+|---|---|---|
+| `view.open(assetUrl)` 传 URL 字符串 | ❌ **否** | 引擎的 `fetchFile()` 会 `fetch` 整个文件再 `new File([await res.blob()])`，**整读进内存** |
+| `plugin-fs` `readFile()` → `new File([bytes])` | ❌ 否 | 字节数组本来就全量在内存里 |
+| **`assetUrl` + 自建 loader（zip.js `HttpRangeReader`）** | ✅ **是** | Tauri 的 asset 协议**原生支持 Range**（`asset.rs` 用 `http_range`，返回 206 + `Accept-Ranges: bytes`） |
+
+**关键源码证据**（`view.js`）：
+
+```js
+const fetchFile = async url => {
+    const res = await fetch(url)
+    return new File([await res.blob()], new URL(res.url).pathname)   // ← 整读
+}
+export const makeBook = async file => {
+    if (typeof file === 'string') file = await fetchFile(file)       // ← URL 走这条
+}
+const makeZipLoader = async file => {
+    const reader = new ZipReader(new BlobReader(file))               // ← 永远不用 HttpRangeReader
+}
+```
+
+**结论**：引擎自带的 URL 路径**不用** range，尽管 zip.js 支持。
+要保真流式，必须由 **L2 适配层自建 loader**（实现 foliate 的 loader 接口：
+`entries` / `loadText` / `loadBlob` / `getSize`），底层用 zip.js 的 `HttpRangeReader`。
+
+**配套改动**：vendor 入口需**增补导出** `HttpRangeReader`：
+
+```js
+export { configure, ZipReader, BlobReader, HttpRangeReader, TextWriter, BlobWriter }
+    from '../node_modules/@zip.js/zip.js/lib/zip-core.js'
+```
+
+**v1 的务实取舍**：若暂时接受整读（典型电子书 < 50 MB，桌面内存完全够），
+先用 `readFile` 路径，但**必须在文档与 UI 中如实标注**，并在 Phase 6 前补上 range 路径。
+不要默默丢掉这个卖点。
+
+> ℹ️ 勘误：本文档早期版本称「HTTP range 只对远程 URL 有意义，本地文件不需要」——
+> 该结论**仅对浏览器 `<input type=file>` 成立**，对 Tauri 不成立。
 
 ---
 

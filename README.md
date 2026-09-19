@@ -109,7 +109,8 @@
 | 图标 | **lucide-react** | `^1.47.0` | 按需引入 |
 | 桌面壳 | **Tauri** | `^2.11.4` | 系统原生 WebView |
 | 本地数据库 | **tauri-plugin-sql** | `^2.4.1` | 启用 `sqlite` feature |
-| 文件系统 | **tauri-plugin-fs** | `^2.5.2` | 打开本地书籍、选择目录 |
+| 文件系统 | **tauri-plugin-fs** | `^2.5.2` | 读取本地书籍 |
+| 系统对话框 | **tauri-plugin-dialog** | `^2.7.3` | 选择书籍 / 目录 |
 | Rust | stable | `1.98.1`（锁定，MSRV 同值） | 后端，见 [rust-toolchain.toml](rust-toolchain.toml) |
 
 **依赖控制原则**
@@ -151,9 +152,16 @@ L0  Vendor    public/vendor/foliate/  zip.js · fflate.js · pdfjs/
 git clone --recurse-submodules <repo-url> Pitaki
 cd Pitaki
 pnpm install
-pnpm run build:vendor      # 生成 public/vendor/foliate/*（首次必做）
+pnpm run build:vendor      # 生成 public/foliate/vendor/*（首次必做）
 pnpm run tauri:dev         # 桌面端开发
 ```
+
+### ⚠️ 已知环境问题
+
+| 症状 | 原因 | 处理 |
+|---|---|---|
+| `tsc` 启动即 panic：`bundled: …/store/v3/files/…/lib.d.ts does not exist` | TypeScript 7 是**原生（Go）编译器**，自带 platform binary，与 pnpm 的硬链接存储不兼容 | 已在 `.npmrc` 设 `package-import-method=copy`，**不要删** |
+| `vite build` 报缺 `esbuild` | Vite 8 默认 minifier 已切换，`minify: 'esbuild'` 需额外安装 | 用 `minify: 'oxc'`（仓库已配置） |
 
 ---
 

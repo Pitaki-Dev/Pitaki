@@ -54,6 +54,8 @@ Web 端用同一份 Vite 静态构建。阅读引擎是 **foliate-js**。
 | R11 | **不要把引擎源码复制进 `src/`** | `view.js` 用相对路径 `./vendor/zip.js` 解析，目录结构必须保持 |
 | R12 | **不要「顺手」重构文档或重命名目录** | 文档是经过实测的，改动需先说明理由 |
 | R13 | **vendor 打包入口必须用相对路径 `lib/zip-core.js`** | 用包根会让产物从 36 KB 涨到 122 KB；用裸规格符会被 exports 映射到 WASM 变体 |
+| R14 | **Tauri 里不要用 `view.open(url)` 或 `readFile` 作为最终取书方案** | 两者都会把整个文件读进内存，直接毁掉项目核心卖点。详见 [ENGINE.md §4.1](docs/ENGINE.md) |
+| R15 | **不要删 `.npmrc` 的 `package-import-method=copy`** | TypeScript 7 是原生编译器，与 pnpm 硬链接存储不兼容，会启动即 panic |
 
 > ℹ️ **R3 / R4 / R5 属于 PDF 相关约束**。PDF 已推迟到 Phase 7，
 > **当前 Step 0 / Step 1 不涉及**，做到 PDF 时再启用这三条。
@@ -254,6 +256,11 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 - [ ] 打通 `open()` → **`init()`** → `relocate` / `load`
       （⚠️ **`open()` 后必须调 `init()`，否则不渲染任何章节**，见 [ENGINE.md §4](docs/ENGINE.md)）
 - [ ] 适配层包平 `goTo` 的两层签名，对外只暴露 `goToIndex` / `goToCFI` / `goToFraction`
+- [ ] **定下桌面端的取书路径**（本项目核心前提，见 [ENGINE.md §4.1](docs/ENGINE.md)）：
+      - ❌ `view.open(assetUrl)` —— 引擎的 `fetchFile()` 会整读
+      - ❌ `plugin-fs readFile()` —— 字节本就全量在内存
+      - ✅ **`assetUrl` + 自建 loader + zip.js `HttpRangeReader`**（Tauri asset 协议原生支持 Range）
+      - 若 v1 暂时接受整读，**必须在文档与 UI 中如实标注**，并排期补上
 - [ ] L3 订阅 `load` 事件做书页样式注入
 
 **DoD**：能从本地选一个 EPUB 并在 App 里翻页阅读。
