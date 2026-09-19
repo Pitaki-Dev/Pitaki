@@ -1,0 +1,29 @@
+[package]
+name = "pitaki"
+version = "0.0.0"
+description = "Pitaki — 本地优先的跨平台电子书阅读器"
+edition = "2024"
+# 与 rust-toolchain.toml 一致，锁到 patch 位（1.98.0 有 rustc vtable 误编译缺陷，见 docs/TAURI.md §6.1）
+rust-version = "1.98.1"
+license = "Apache-2.0"
+
+[lib]
+name = "pitaki_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.5", features = [] }
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

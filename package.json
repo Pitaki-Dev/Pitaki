@@ -1,0 +1,47 @@
+{
+  "name": "pitaki",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "build:vendor": "node scripts/build-foliate-vendor.mjs",
+    "sync:foliate": "node scripts/sync-foliate.mjs",
+    "prepare:engine": "pnpm sync:foliate && pnpm build:vendor",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@heroui/react": "^3.2.6",
+    "@heroui/styles": "^3.2.6",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.3",
+    "@tauri-apps/plugin-fs": "^2.5.2",
+    "@tauri-apps/plugin-sql": "^2.4.1",
+    "@zip.js/zip.js": "^2.15.0",
+    "fflate": "^0.8.3",
+    "lucide-react": "^1.47.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tauri-apps/cli": "^2.11.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "rollup": "^4.63.3",
+    "tailwindcss": "^4.3.3",
+    "terser": "^5.46.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}

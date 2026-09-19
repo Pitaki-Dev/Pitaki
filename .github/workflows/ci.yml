@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # L0 vendor 产物（含 zip.js ≈36–59 KB 的体积断言，见 AGENTS.md R13）
+      - run: pnpm build:vendor
+      # L1 → public/foliate 同步（校验 view.js 的相对路径加载仍在，R11）
+      - run: pnpm sync:foliate
+      - run: pnpm typecheck
+      - run: pnpm build

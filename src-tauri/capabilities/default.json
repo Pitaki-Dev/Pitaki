@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Pitaki 主窗口的最小权限集（docs/TAURI.md §1）",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "dialog:default",
+    "sql:default",
+    "sql:allow-execute"
+  ]
+}
