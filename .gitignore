@@ -21,6 +21,9 @@ src-tauri/gen/schemas/
 public/vendor/foliate/
 public/foliate/
 
+# ---- 一次性验证 spike（Step 0），结论另存 docs/SPIKE-FINDINGS.md ----
+spike/
+
 # ---- 第三方源码（git submodule 管理）----
 third_party/foliate-js/
 

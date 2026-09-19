@@ -106,7 +106,18 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 **为什么先做这个**：整个方案里唯一还没被实证的一环就是「zip.js 随机访问 + pdfjs vendor 产物能否真正跑通」。
 **如果这步失败，后面的骨架搭了也是白搭。**
 
-在 `spike/` 目录（加入 `.gitignore`）做一个**一次性验证**，不追求工程质量。
+在 `spike/` 目录做一个**一次性验证**，不追求工程质量。
+
+#### 环境约定
+
+- **独立 `spike/package.json`** —— 不要把 `@zip.js/zip.js` / `fflate` / `pdfjs-dist` / `vite`
+  装到仓库根，避免污染 Step 1 的骨架。`spike/` 整体加入 `.gitignore`。
+- 引擎副本与其 vendor 产物也放在 `spike/public/foliate/`，保证整体可丢弃。
+- **不要用 `--host` 通过局域网 IP 访问**（`http://192.168.x.x:5173` **不是安全上下文**，
+  会让 Web Crypto SHA-1 失效、字体去混淆报错）。一律用 `http://localhost:5173`。
+- **纯 Vite dev server 不设 CSP**，所以这里验证的是「渲染成功 + 控制台无报错」，
+  **不是**「符合 CSP」。CSP 的严格性留到 Step 1 —— 但
+  **Step 1 必须在 Tauri 窗口内把 A/B/C 原样重跑一遍**，因为那才是真实运行环境。
 
 #### 要做的事
 
@@ -144,18 +155,47 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
    | 验证 | 方法 | 通过标准 |
    |---|---|---|
-   | **A. ZIP 随机访问** | 用一个 `Proxy` 包住 `File`，统计实际读取的字节数 | 打开一个 >10MB 的 EPUB 时，**读取字节数远小于文件大小**（证明没有整体载入） |
-   | **B. 中文 PDF** | 打开一个**含中文**的 PDF | 文字正常显示、可选中，**无方块/乱码**（证明 `cmaps` 生效） |
-   | **C. iframe + blob 渲染** | 打开 EPUB，检查章节是否渲染 | 正文可见、可翻页，控制台无 CSP 报错 |
+   | **A. ZIP 随机访问** | 统计 `ZipReader` 实际读取的字节数（见下方「计数方法」） | 打开 >10MB 的 **EPUB** 时，读取量 **< 文件大小的 10%**，且**不随文件增大而线性增长** |
+   | **B. 中文 PDF** | 打开**含中文**的 PDF | 文字正常显示、可选中、**无方块/乱码**；且缺失 `cmaps` 时**必须失败**（见下） |
+   | **C. iframe + blob 渲染** | 打开 EPUB，检查章节是否渲染 | 正文可见、可翻页，控制台无报错 |
 
-5. **记录证据**：截图或日志，尤其 A 的字节数对比与 B 的文字选中情况。
+   **计数方法（A）**：不要用 `Proxy` —— 它可能破坏 `instanceof Blob` 判断。
+   直接覆盖 **File 实例上的 `slice`** 即可，zip.js 的 `BlobReader` 正是靠 `blob.slice()` 读取：
+
+   ```js
+   const origSlice = file.slice.bind(file)
+   let bytes = 0, calls = 0
+   file.slice = (...args) => {
+     const b = origSlice(...args)
+     calls++; bytes += b.size
+     console.log('[slice]', args[0], args[1], '→', b.size)
+     return b
+   }
+   ```
+
+   （若 zip.js 不按预期走 `slice`，再退回「包一层 Blob 兼容对象」的方案。）
+
+   ⚠️ **必须用 EPUB 测随机访问，不要用 MOBI。** 引擎对 MOBI 会「一次性解压全部文本」
+   （上游 README 明示）—— 读满整个文件属**预期行为**，不是失败。
+
+   ℹ️ **不需要 HTTP range 方案。** 那是给远程 URL 用的；Pitaki 通过 Tauri fs 读**本地文件**，
+   走的是 `File`/`Blob` 路径。HTTP range 要到 Phase 7（OPDS/云同步）才有意义。
+
+   **B 的反向验证（重要）**：现代工具生成的 PDF 常自带 `ToUnicode`，
+   **即使没有 `cmaps` 也能正常显示** —— 那样这个测试就是**假阳性**。
+   所以必须做一次**变异测试**：临时把 `vendor/foliate/pdfjs/cmaps/` 改名，
+   确认该 PDF **确实出现乱码**，再改回来。**测试能失败，才证明它有效。**
+
+5. **记录证据**：截图或日志；A 的文件大小 vs 实际读取量对比、B 的选中效果与变异测试结果。
 
 #### 完成标准（DoD）
 
 - [ ] 三个验证全部通过，或**明确指出哪一项失败及原因**
-- [ ] 记下 `public/vendor/foliate/` 的**产物体积**
+- [ ] B 的**变异测试**已做，且确认缺 `cmaps` 时会失败
+- [ ] 记下 `spike/public/vendor/foliate/` 的**产物体积**
 - [ ] 记下实际可用的加载路径（`/foliate/view.js` 能否被 Vite dev server 正常解析）
-- [ ] spike 代码已在 `spike/` 下且被 gitignore
+- [ ] 记下所用 **foliate-js 的 commit hash**
+- [ ] 结论写入 **`docs/SPIKE-FINDINGS.md` 并提交**（spike 代码本身丢弃即可）
 - [ ] 向用户汇报，**等待确认后再进 Step 1**
 
 #### 🛑 失败时的处理
@@ -183,7 +223,11 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 - [ ] `git submodule add https://github.com/johnfactotum/foliate-js third_party/foliate-js` 并**锁定 commit**
 - [ ] CI：`tsc --noEmit` + `vite build` + vendor 构建
 
-**DoD**：`pnpm tauri:dev` 能启动空白窗口，控制台无报错；`pnpm build:vendor` 能重复产出一致的 vendor 产物。
+**DoD**：
+- [ ] `pnpm tauri:dev` 能启动窗口，控制台无报错
+- [ ] `pnpm build:vendor` 能重复产出一致的 vendor 产物
+- [ ] **在 Tauri 窗口内重跑 Step 0 的 A/B/C 三项验证并全部通过**
+      —— 浏览器能跑通 ≠ Tauri 能跑通（真实差异在 CSP 与安全上下文）
 
 ---
 
