@@ -1,6 +1,51 @@
-/* 顺序不能换：Tailwind 必须先于 HeroUI（AGENTS.md Step 2 / R12） */
+/*
+ * 顺序与分层不能乱：
+ *  1. `@layer` 顺序声明必须在最前（与 HeroUI barrel 一致）
+ *  2. `tailwindcss` 必须先于 HeroUI（AGENTS.md Step 2）
+ *  3. HeroUI 只引入**用到的组件**，不引 barrel（`@heroui/styles` 会经 dist/index.css
+ *     把全部 60+ 组件的结构样式拉进来，实测 547 KB → 按组件后见下）
+ *
+ * ⚠️ 新增 HeroUI 组件时，必须同时在下面补一行 `components/<name>.css`，
+ *    否则组件「能渲染但无样式」。当前用到的组件清单：
+ *      Button      → components/button.css
+ *      Card        → components/card.css
+ *      Chip        → components/chip.css
+ *      Drawer      → components/drawer.css + components/close-button.css
+ *                    （Drawer.CloseTrigger 内部渲染 CloseButton，漏引会出现「无样式的关闭按钮」）
+ *      Separator   → components/separator.css
+ *    组件之间的依赖要一起引。查法：在 node_modules/@heroui/react/dist/components/<name>/ 下
+ *    搜 ../<other-component>/index.js 的相对导入，命中的都要补一行。
+ *
+ * ⚠️⚠️ 顺序不能按字母排：组件 CSS 会互相覆盖（例：.close-button 的 `relative` 与
+ *      .drawer__close-trigger 的 `absolute`），必须**保持 barrel 里的相对顺序**，
+ *      即 node_modules/@heroui/styles/dist/components/index.css 的行号顺序。
+ *      当前这几个在 barrel 中的行号：close-button 18 < button 38 < chip 79 < card 125
+ *      < separator 127 < drawer 140。乱序的后果：抽屉关闭按钮会掉回文档流（position: relative）。
+ *    （useTheme / useMediaQuery / useOverlayState 是 hooks，不需要 CSS）
+ *    查漏办法：跑视觉回归脚本 spike/tools/verify-ui.mjs + style-snapshot.mjs（Playwright）。
+ */
+@layer theme, base, components, utilities;
+
 @import "tailwindcss";
-@import "@heroui/styles";
+
+/* HeroUI 基础区（含 scrollbar / 排版 token） */
+@import "@heroui/styles/base";
+@import "@heroui/styles/base/scrollbar.css";
+
+/* HeroUI utilities 与 variants：组件 CSS 依赖它们（status-focused / no-highlight / motion-reduce…） */
+@import "@heroui/styles/utilities";
+@import "@heroui/styles/variants";
+
+/* 主题变量（含 shared/theme.css 与 components 定制） */
+@import "@heroui/styles/themes/default" layer(theme);
+
+/* 用到的组件（按需增加；顺序 = barrel 里的行号顺序，不要重排） */
+@import "@heroui/styles/components/close-button.css" layer(components);
+@import "@heroui/styles/components/button.css" layer(components);
+@import "@heroui/styles/components/chip.css" layer(components);
+@import "@heroui/styles/components/card.css" layer(components);
+@import "@heroui/styles/components/separator.css" layer(components);
+@import "@heroui/styles/components/drawer.css" layer(components);
 
 /*
  * 外壳主题 token（完整定义，不是只改 --background/--foreground）。
@@ -134,8 +179,9 @@
   padding-left: env(safe-area-inset-left);
 }
 
-/* 触摸目标下限 44×44（docs/UI.md §5） */
-@utility touch-target {
+/* 触摸目标下限 44×44（docs/UI.md §5）。
+   注意不要叫 touch-target —— HeroUI 的 utilities 里已有同名工具类，语义不同（它用 ::after 扩热区）。 */
+@utility pitaki-touch {
   min-height: 2.75rem;
   min-width: 2.75rem;
 }

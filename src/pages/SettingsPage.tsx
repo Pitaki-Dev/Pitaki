@@ -33,14 +33,14 @@ export function SettingsPage({ theme, resolvedTheme, setTheme }: SettingsPagePro
 
       <h2 className="mt-6 text-sm font-medium">外观</h2>
       <Separator className="my-2" />
-      {/* 触摸目标 ≥44px：size="lg" + touch-target；触摸设备 48px */}
+      {/* 触摸目标 ≥44px：size="lg" + pitaki-touch；触摸设备 48px */}
       <div className="flex flex-wrap gap-2">
         {THEMES.map(({ value, label, icon: Icon }) => (
           <Button
             key={value}
             size="lg"
             variant={theme === value ? 'primary' : 'ghost'}
-            className="touch-target pointer-coarse:min-h-12"
+            className="pitaki-touch pointer-coarse:min-h-12"
             aria-pressed={theme === value}
             onPress={() => setTheme(value)}
           >
@@ -61,7 +61,7 @@ export function SettingsPage({ theme, resolvedTheme, setTheme }: SettingsPagePro
             key={label}
             size="lg"
             variant={flowPreference === value ? 'primary' : 'ghost'}
-            className="touch-target pointer-coarse:min-h-12"
+            className="pitaki-touch pointer-coarse:min-h-12"
             aria-pressed={flowPreference === value}
             onPress={() => setFlowPreference(value)}
           >

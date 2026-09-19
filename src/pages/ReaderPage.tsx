@@ -30,11 +30,11 @@ export function ReaderPage() {
       {/* 顶栏：点按画布切换显隐（tap-to-toggle），不靠 hover */}
       {chromeVisible ? (
         <header className="shell-safe-area flex items-center justify-between gap-2 border-b border-[var(--border)] bg-[var(--surface)] px-2 py-1.5">
-          <Button isIconOnly size="lg" variant="ghost" className="touch-target" aria-label="目录">
+          <Button isIconOnly size="lg" variant="ghost" className="pitaki-touch" aria-label="目录">
             <List aria-hidden />
           </Button>
           <span className="truncate text-sm text-[var(--muted)]">未打开书籍</span>
-          <Button isIconOnly size="lg" variant="ghost" className="touch-target" aria-label="排版设置">
+          <Button isIconOnly size="lg" variant="ghost" className="pitaki-touch" aria-label="排版设置">
             <Type aria-hidden />
           </Button>
         </header>
@@ -65,7 +65,7 @@ export function ReaderPage() {
             isIconOnly
             size="lg"
             variant="ghost"
-            className="touch-target"
+            className="pitaki-touch"
             aria-label="上一页"
             isDisabled
           >
@@ -76,7 +76,7 @@ export function ReaderPage() {
             <Button
               size="lg"
               variant="ghost"
-              className="touch-target"
+              className="pitaki-touch"
               onPress={() => setFlowPreference(flow === 'paginated' ? 'scrolled' : 'paginated')}
             >
               <Settings2 size={18} aria-hidden />
@@ -87,7 +87,7 @@ export function ReaderPage() {
             isIconOnly
             size="lg"
             variant="ghost"
-            className="touch-target"
+            className="pitaki-touch"
             aria-label="下一页"
             isDisabled
           >
@@ -98,7 +98,7 @@ export function ReaderPage() {
 
       {import.meta.env.DEV ? (
         <div className="border-t border-[var(--border)] bg-[var(--surface-secondary)] p-2">
-          <Button size="lg" variant="ghost" className="touch-target" onPress={() => void runSpike()}>
+          <Button size="lg" variant="ghost" className="pitaki-touch" onPress={() => void runSpike()}>
             复跑 Step 0/1 的 A/B 验证（dev）
           </Button>
           {spikeLines.length ? (

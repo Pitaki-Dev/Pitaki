@@ -37,7 +37,7 @@ export function AppShell({ route, children }: { route: Route; children: ReactNod
             size="lg"
             variant="ghost"
             aria-label="打开导航"
-            className="touch-target"
+            className="pitaki-touch"
             onPress={() => {
               setDrawerMounted(true)
               drawer.open()
@@ -85,7 +85,7 @@ function NavList({ route, onNavigate }: { route: Route; onNavigate?: () => void 
             aria-current={active ? 'page' : undefined}
             // 44px 触摸目标；触摸设备再放宽到 48px（pointer-coarse 变体，不用 UA 嗅探）
             className={[
-              'touch-target pointer-coarse:min-h-12',
+              'pitaki-touch pointer-coarse:min-h-12',
               'flex items-center gap-3 rounded-lg px-3 py-2 text-sm no-underline',
               'transition-colors',
               active

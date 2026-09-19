@@ -17,7 +17,7 @@ export function LibraryPage() {
           <p className="text-sm text-[var(--muted)]">本地优先：所有书籍都保存在本机</p>
         </div>
         {/* 44px 触摸目标；触摸设备 48px */}
-        <Button variant="primary" className="touch-target pointer-coarse:min-h-12" isDisabled>
+        <Button variant="primary" className="pitaki-touch pointer-coarse:min-h-12" isDisabled>
           <BookPlus size={18} aria-hidden />
           导入书籍（Step 3）
         </Button>
