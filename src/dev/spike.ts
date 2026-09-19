@@ -184,6 +184,16 @@ export async function runSpike(log: (message: string) => void): Promise<SpikeRep
     cspViolations,
   }
 
+  if (!paths.length) {
+    log('[spike] 未配置 PITAKI_SPIKE_SAMPLES，跳过（Tauri 里由 Rust env 提供样本路径）')
+    return {
+      phase: 'step1-tauri-ab',
+      ranAt: new Date().toISOString(),
+      context,
+      samples: [],
+    }
+  }
+
   log(`[env] origin=${context.origin} secureContext=${context.isSecureContext} crypto.subtle=${context.cryptoSubtle}`)
   log(`[env] userAgent=${context.userAgent}`)
   log('[engine] 注入 <script type="module" src="/foliate/view.js"> …')
@@ -209,7 +219,18 @@ export async function runSpike(log: (message: string) => void): Promise<SpikeRep
       let loads = 0
       view.addEventListener('load', () => { loads++ })
       view.addEventListener('error', (e: Event) => errors.push(`view error: ${String((e as CustomEvent).detail)}`))
-      document.getElementById('spike-reader')!.replaceChildren(view)
+      // 自己建一个屏外容器：Step 2 之后 App 里不再有 spike 专用的挂载点
+      const host = (() => {
+        let element = document.getElementById('pitaki-spike-host')
+        if (!element) {
+          element = document.createElement('div')
+          element.id = 'pitaki-spike-host'
+          element.style.cssText = 'position:fixed;left:-10000px;top:0;width:700px;height:500px;visibility:hidden'
+          document.body.append(element)
+        }
+        return element
+      })()
+      host.replaceChildren(view)
 
       const t0 = performance.now()
       await view.open(file)

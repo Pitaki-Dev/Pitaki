@@ -12,6 +12,8 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"],
     "noUncheckedSideEffectImports": true,
     "erasableSyntaxOnly": true,
     "strict": true,

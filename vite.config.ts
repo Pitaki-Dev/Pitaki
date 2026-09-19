@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 
 // Tauri 通过 TAURI_ENV_* 注入目标平台信息，用于选择构建 target。
 // https://v2.tauri.app/start/frontend/vite/
 const host = process.env.TAURI_DEV_HOST
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   // 一律 http://localhost:5173 —— 局域网 IP 不是安全上下文，Web Crypto SHA-1 会失效
   clearScreen: false,
   server: {

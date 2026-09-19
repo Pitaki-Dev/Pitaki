@@ -1,0 +1,141 @@
+/* 顺序不能换：Tailwind 必须先于 HeroUI（AGENTS.md Step 2 / R12） */
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/*
+ * 外壳主题 token（完整定义，不是只改 --background/--foreground）。
+ * 书页主题不走这里 —— 书页在嵌套 iframe 内，必须用 renderer.setStyles()（R6，见 docs/THEMING.md）。
+ */
+@layer base {
+  :root,
+  .light,
+  [data-theme="light"] {
+    color-scheme: light;
+
+    /* —— 基础色 —— */
+    --background: oklch(0.9755 0.0045 258.32);
+    --background-secondary: oklch(0.9608 0.0058 264.53);
+    --background-tertiary: oklch(0.9394 0.0075 260.73);
+    --foreground: oklch(0.2564 0.0156 261.69);
+    --muted: oklch(0.5517 0.0198 264.36);
+    --border: oklch(0.8982 0.0089 260.73);
+    --separator: oklch(0.9219 0.0074 260.73);
+    --default: oklch(0.9299 0.0066 264.53);
+
+    /* —— 表面 —— */
+    --surface: oklch(1 0 0);
+    --surface-foreground: var(--foreground);
+    --surface-secondary: oklch(0.9647 0.0049 264.53);
+    --surface-secondary-foreground: var(--foreground);
+    --surface-tertiary: oklch(0.9451 0.0067 260.73);
+    --surface-tertiary-foreground: var(--foreground);
+    --overlay: oklch(1 0 0);
+    --overlay-foreground: var(--foreground);
+
+    /* —— 主色 —— */
+    --accent: oklch(0.5461 0.2152 262.88);
+    --accent-foreground: oklch(0.9911 0 0);
+    --accent-soft: oklch(0.9299 0.0343 262.88);
+    --accent-soft-foreground: oklch(0.4244 0.1809 265.64);
+
+    /* —— 状态 —— */
+    --success: oklch(0.6271 0.1699 149.21);
+    --success-foreground: oklch(0.9911 0 0);
+    --warning: oklch(0.7686 0.1647 70.08);
+    --warning-foreground: oklch(0.2564 0.0156 261.69);
+    --danger: oklch(0.5771 0.2152 27.33);
+    --danger-foreground: oklch(0.9911 0 0);
+
+    /* —— 圆角 / 描边 —— */
+    --radius: 0.625rem;
+    --border-width: 1px;
+
+    /* —— 外壳专属（Tailwind 无法从 HeroUI 推导的部分）—— */
+    --shell-sidebar: oklch(0.9911 0.0018 258.32);
+    --shell-topbar: color-mix(in oklab, var(--shell-sidebar) 88%, transparent);
+    --shell-canvas: var(--background);
+    --shell-shadow: 0 1px 2px 0 oklch(0 0 0 / 0.06);
+
+    /* 阅读区画布（Step 3 起会被书页主题覆盖，这里先给外壳用） */
+    --reader-paper: oklch(0.9881 0.0025 90.09);
+    --reader-ink: oklch(0.2564 0.0156 261.69);
+  }
+
+  .dark,
+  [data-theme="dark"] {
+    color-scheme: dark;
+
+    --background: oklch(0.2103 0.0059 285.89);
+    --background-secondary: oklch(0.2464 0.0073 285.89);
+    --background-tertiary: oklch(0.2757 0.0087 285.89);
+    --foreground: oklch(0.9491 0.0055 285.89);
+    --muted: oklch(0.6979 0.0113 285.89);
+    --border: oklch(0.3269 0.0091 285.89);
+    --separator: oklch(0.2981 0.0084 285.89);
+    --default: oklch(0.2981 0.0084 285.89);
+
+    --surface: oklch(0.2464 0.0073 285.89);
+    --surface-foreground: var(--foreground);
+    --surface-secondary: oklch(0.2757 0.0087 285.89);
+    --surface-secondary-foreground: var(--foreground);
+    --surface-tertiary: oklch(0.3063 0.0098 285.89);
+    --surface-tertiary-foreground: var(--foreground);
+    --overlay: oklch(0.2464 0.0073 285.89);
+    --overlay-foreground: var(--foreground);
+
+    --accent: oklch(0.6731 0.1824 261.06);
+    --accent-foreground: oklch(0.2103 0.0059 285.89);
+    --accent-soft: oklch(0.3186 0.0964 264.05);
+    --accent-soft-foreground: oklch(0.8823 0.0571 254.13);
+
+    --success: oklch(0.7232 0.1699 148.02);
+    --success-foreground: oklch(0.2103 0.0059 285.89);
+    --warning: oklch(0.8203 0.1584 78.24);
+    --warning-foreground: oklch(0.2103 0.0059 285.89);
+    --danger: oklch(0.7045 0.1913 22.22);
+    --danger-foreground: oklch(0.2103 0.0059 285.89);
+
+    --shell-sidebar: oklch(0.2343 0.007 285.89);
+    --shell-topbar: color-mix(in oklab, var(--shell-sidebar) 88%, transparent);
+    --shell-canvas: var(--background);
+    --shell-shadow: 0 1px 2px 0 oklch(0 0 0 / 0.4);
+
+    --reader-paper: oklch(0.2464 0.0073 285.89);
+    --reader-ink: oklch(0.9087 0.007 285.89);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--shell-canvas);
+    color: var(--foreground);
+    font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif;
+    /* 移动端点击高亮只保留在可交互元素上 */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 只对键盘用户显示焦点环，触摸/鼠标不显示 */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* 外壳工具类：安全区 + 触摸目标，避免到处写 env() */
+@utility shell-safe-area {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* 触摸目标下限 44×44（docs/UI.md §5） */
+@utility touch-target {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
