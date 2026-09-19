@@ -23,8 +23,13 @@ if (!existsSync(join(SRC, 'view.js'))) {
   process.exit(1)
 }
 
-rmSync(DST, { recursive: true, force: true })
+// 只清掉引擎文件，保留 vendor/ —— 它由 build:vendor 生成，误删会让 public/foliate/view.js 404
 mkdirSync(DST, { recursive: true })
+if (existsSync(DST)) {
+  for (const entry of readdirSync(DST)) {
+    if (entry !== 'vendor') rmSync(join(DST, entry), { recursive: true, force: true })
+  }
+}
 cpSync(SRC, DST, {
   recursive: true,
   dereference: false,
