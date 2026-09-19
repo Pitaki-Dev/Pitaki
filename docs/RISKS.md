@@ -14,7 +14,7 @@
 | R4 | **CSP 未放行 `blob:`** 导致书能打开但空白 | 中 | 高 | → [TAURI.md](TAURI.md) §2 |
 | R5 | **Tauri v2 ACL 未授权**导致插件调用失败 | 中 | 高 | capability 显式声明权限 |
 | R6 | **`relocate` 高频写库**导致 IO 抖动 | 高 | 中 | 按 `reason` 区分防抖 / 立即落库 |
-| R7 | **WebKitGTK 兼容性** —— Linux 平台对 `srcdoc` iframe + CSS 多列分页支持不一 | 中 | 中 | 早期在 Linux 冒烟测试；必要时调整分页策略 |
+| R7 | **WebKitGTK 兼容性** —— Linux 平台对 `srcdoc` iframe + CSS 多列分页支持不一；`visualViewport` 与触摸事件的行为也与 Chromium 有差异 | 中 | 中 | 早期在 Linux 冒烟测试；触摸相关判定不要只依赖 `visualViewport` |
 | R8 | **纯 HTTP 部署**导致 Web Crypto SHA-1 不可用 | 中 | 中 | 强制 HTTPS，或自带 SHA-1 实现 |
 | R9 | **误装 npm 上的非官方 `foliate-js` 包** | 中 | 高 | 只用 submodule，禁止 `npm i foliate-js` |
 | R10 | **自定义主题只改少量变量**导致对比度异常 | 中 | 低 | 用 Theme Builder 导出完整 token |

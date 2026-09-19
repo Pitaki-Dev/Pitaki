@@ -44,6 +44,13 @@
 - [ ] HeroUI v3 + Tailwind v4 接入
 - [ ] 定义**外壳**主题 token（含 `@layer base` 完整块）→ [THEMING.md](THEMING.md)
 - [ ] 自写轻量路由 + 基础布局（书库 / 阅读器 / 设置）
+- [ ] **响应式**：按 [UI.md](UI.md) §4 落实三个断点的布局（手机 / 平板 / 桌面）
+- [ ] **触摸**：
+  - [ ] 触摸目标 ≥ 44×44 px（`min-h-11 min-w-11`）
+  - [ ] 悬停态全部补上触摸等价物（tap-to-toggle chrome 等）
+  - [ ] `touch-action` / `overscroll-behavior` 按 [UI.md](UI.md) §2 设置
+  - [ ] viewport 含 `viewport-fit=cover`，**不含** `user-scalable=no`
+- [ ] 用 `pointer-coarse:` 变体而非 UA 嗅探区分输入方式
 
 ## Phase 3 — 引擎接入
 

@@ -56,6 +56,8 @@ Web 端用同一份 Vite 静态构建。阅读引擎是 **foliate-js**。
 | R13 | **vendor 打包入口必须用相对路径 `lib/zip-core.js`** | 用包根会让产物从 36 KB 涨到 122 KB；用裸规格符会被 exports 映射到 WASM 变体 |
 | R14 | **Tauri 里不要用 `view.open(url)` 或 `readFile` 作为最终取书方案** | 两者都会把整个文件读进内存，直接毁掉项目核心卖点。详见 [ENGINE.md §4.1](docs/ENGINE.md) |
 | R15 | **不要删 `.npmrc` 的 `package-import-method=copy`** | TypeScript 7 是原生编译器，与 pnpm 硬链接存储不兼容，会启动即 panic |
+| R16 | **不要自己实现滑动翻页；不要给 `foliate-view` 再挂 `touchmove`** | 引擎 paginator **已内置**滑动 + 惯性翻页，且已 `preventDefault()`，重复实现会打架 |
+| R17 | **UI 必须响应式且支持触摸**（不可后补） | 目标含桌面触屏 / 平板 / 手机 Web。触摸目标 ≥44px、悬停态要有等价物、不用 UA 嗅探。见 [docs/UI.md](docs/UI.md) |
 
 > ℹ️ **R3 / R4 / R5 属于 PDF 相关约束**。PDF 已推迟到 Phase 7，
 > **当前 Step 0 / Step 1 不涉及**，做到 PDF 时再启用这三条。
@@ -242,11 +244,24 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 ### Step 2 — UI 基础
 
+> 📌 **开工前必读 [`docs/UI.md`](docs/UI.md)。** 响应式与触摸是**硬性要求**，不是收尾工作。
+
 - [ ] HeroUI v3 + Tailwind v4 接入，`globals.css` 中 `@import "tailwindcss";` **必须在 `@import "@heroui/styles";` 之前**
 - [ ] 在 `@layer base` 里定义**完整**的外壳主题 token（不要只改 `--background`/`--foreground`）
 - [ ] 自写轻量路由（**不要引 React Router**）+ 三页骨架：书库 / 阅读器 / 设置
+- [ ] **响应式**：落实手机（<768）/ 平板（768–1024）/ 桌面（≥1024）三档布局
+- [ ] **触摸**：
+  - [ ] 触摸目标 ≥ 44×44 px（`min-h-11 min-w-11`）
+  - [ ] 悬停态全部补触摸等价物（顶/底栏用 **tap-to-toggle**，不要 hover）
+  - [ ] viewport 含 `viewport-fit=cover`，**绝不含** `user-scalable=no`
+  - [ ] 用 `pointer-coarse:` 变体（Tailwind v4 内置）而非 UA 嗅探
+- [ ] `touch-action` / `overscroll-behavior` 暂不设 —— 留到 Step 3/4 阅读器落地时一起处理
 
-**DoD**：三个页面可切换；主题切换生效；`<Button>` 组件样式正常（证明 HeroUI 接入成功）。
+**DoD**：
+- [ ] 三个页面可切换；主题切换生效；`<Button>` 样式正常（证明 HeroUI 接入成功）
+- [ ] 320px 窄屏与 1440px 宽屏下布局均不破
+- [ ] **用浏览器 DevTools 的触摸模拟跑一遍**，确认无 hover-only 死角
+- [ ] 键盘 Tab 顺序可用、Esc 能关弹层
 
 ---
 

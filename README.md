@@ -74,6 +74,8 @@
 | 多套阅读主题 | 纸质、护眼、夜间等 |
 | 排版可调 | 字体 / 字号 / 行距 / 边距 / 对齐 |
 | 外壳主题 | 基于 HeroUI + Tailwind v4 的 CSS 变量，高度可定制 |
+| 响应式 | 手机 / 平板 / 桌面三档布局，同一份构建 |
+| 触摸 | 滑动翻页（引擎自带）、≥44px 触摸目标、无 hover 死角 → [docs/UI.md](docs/UI.md) |
 
 ### 工程
 
@@ -172,6 +174,7 @@ pnpm run tauri:dev         # 桌面端开发
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 分层架构、目录结构、设计取舍 |
 | [docs/ENGINE.md](docs/ENGINE.md) | foliate-js 集成、vendor 产物构建、API 速查 |
 | [docs/THEMING.md](docs/THEMING.md) | 外壳主题与书页主题的两套机制 |
+| [docs/UI.md](docs/UI.md) | **响应式与触摸**：引擎已有的手势、断点、触摸目标、陷阱 |
 | [docs/DATA-MODEL.md](docs/DATA-MODEL.md) | SQLite 表结构、状态管理与同步策略 |
 | [docs/TAURI.md](docs/TAURI.md) | capabilities / ACL、CSP、安全上下文 |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | 分阶段实施计划 |
