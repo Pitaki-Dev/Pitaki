@@ -10,7 +10,7 @@
 ![Tauri](https://img.shields.io/badge/Tauri-2.11-24C8DB?logo=tauri&logoColor=white)
 ![HeroUI](https://img.shields.io/badge/HeroUI-3.2-000000)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.3-06B6D4?logo=tailwindcss&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
+![License](https://img.shields.io/badge/License-Apache--2.0-blue)
 
 ---
 
@@ -110,7 +110,7 @@
 | 桌面壳 | **Tauri** | `^2.11.4` | 系统原生 WebView |
 | 本地数据库 | **tauri-plugin-sql** | `^2.4.1` | 启用 `sqlite` feature |
 | 文件系统 | **tauri-plugin-fs** | `^2.5.2` | 打开本地书籍、选择目录 |
-| Rust | stable | `1.98.1` | 后端 |
+| Rust | stable | `1.98.1`（锁定，MSRV 同值） | 后端，见 [rust-toolchain.toml](rust-toolchain.toml) |
 
 **依赖控制原则**
 
@@ -142,7 +142,7 @@ L0  Vendor    public/vendor/foliate/  zip.js · fflate.js · pdfjs/
 ### 前置要求
 
 - **Node.js** ≥ 20
-- **Rust** ≥ 1.98（仅桌面端构建需要）
+- **Rust** ≥ **1.98.1**（仅桌面端构建需要；仓库已用 [rust-toolchain.toml](rust-toolchain.toml) 锁定，rustup 会自动切换）
 - 各平台 Tauri v2 系统依赖，见 [官方文档](https://v2.tauri.app/start/prerequisites/)
 
 ### 安装与开发
@@ -174,6 +174,6 @@ pnpm run tauri:dev         # 桌面端开发
 
 ## 许可证
 
-本项目采用 **MIT** 许可证，详见 [LICENSE](LICENSE)。
+本项目采用 **Apache License 2.0**，详见 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。
 
-依赖许可证审计（含 foliate-js / zip.js / PDF.js / Tauri 等）见 [docs/LICENSING.md](docs/LICENSING.md)。
+选择 Apache-2.0 的理由（含显式专利授权）与完整的依赖许可证审计结果，见 [docs/LICENSING.md](docs/LICENSING.md)。

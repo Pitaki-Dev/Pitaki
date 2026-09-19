@@ -1,0 +1,28 @@
+Pitaki
+Copyright 2026 Maicy0609
+
+This product is licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+---
+
+This product bundles third-party software. Required attribution notices
+for bundled components are collected in:
+
+    docs/LICENSING.md
+    docs/license-audit/APPENDIX.md
+
+Bundled components include, but are not limited to:
+
+  - foliate-js            MIT License        https://github.com/johnfactotum/foliate-js
+  - @zip.js/zip.js        BSD 3-Clause       https://github.com/gildas-lormeau/zip.js
+  - PDF.js (pdfjs-dist)   Apache License 2.0 https://mozilla.github.io/pdf.js/
+  - fflate                MIT License        https://github.com/101arrowz/fflate
+  - HeroUI                MIT License        https://github.com/heroui-inc/heroui
+  - React                 MIT License        https://react.dev
+  - Tauri                 MIT / Apache-2.0   https://tauri.app
+
+Rust dependencies are statically linked; their licenses are enumerated in
+docs/license-audit/rust-crates.json.

@@ -94,4 +94,41 @@ IDPF 字体去混淆默认调用 **Web Crypto 的 SHA-1**，该 API **仅在安�
 | `@tauri-apps/plugin-fs` | `^2.5.2` |
 | `@tauri-apps/plugin-sql` | `^2.4.1` |
 | `tauri`（crate） | `2.11.5` |
-| Rust stable | `1.98.1` |
+| Rust stable | `1.98.1`（锁定） |
+
+> ⚠️ Tauri **3.0.0-alpha.1** 已发布，但仍是 alpha。本项目使用 **v2 稳定线**。
+
+---
+
+## 6. Rust 工具链
+
+### 6.1 版本决定
+
+| 项 | 值 | 说明 |
+|---|---|---|
+| 锁定工具链 | **1.98.1** | 见 [rust-toolchain.toml](../rust-toolchain.toml) |
+| MSRV（`rust-version`） | **1.98.1** | 与锁定值一致，避免「声明了却没测过」的 MSRV 失真 |
+| Tauri 自身 MSRV | 1.77.2 | 上游的**下限**，不是我们的目标 |
+| Edition | 2024 | 需 Rust ≥ 1.85，当前工具链满足 |
+
+**为什么锁到 patch 位（1.98.1 而非 1.98）**：
+
+`1.98.0` 存在已知的 rustc **vtable 误编译缺陷**（[rust-lang/rust#161441](https://github.com/rust-lang/rust/issues/161441)），已在 1.98.1 修复。把 MSRV 写到 `1.98.1` 可以**从工具链层面阻止**他人用有问题的 1.98.0 构建本项目。
+
+```toml
+# src-tauri/Cargo.toml
+[package]
+rust-version = "1.98.1"   # 而非 "1.98"
+```
+
+### 6.2 版本节奏
+
+Rust 每 6 周发布一版。截至 2026-09-19：
+
+| 通道 | 版本 |
+|---|---|
+| stable | **1.98.1**（2026-09-03） |
+| beta | 1.99.0-beta.6（2026-09-17） |
+| nightly | 1.100.0-nightly（2026-09-18） |
+
+**1.99.0 预计 2026-10 初发布**。升级时需同步更新 `rust-toolchain.toml` 与 `Cargo.toml` 的 `rust-version`。

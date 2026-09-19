@@ -1,0 +1,11 @@
+# 锁定 Rust 工具链，保证构建可复现。
+#
+# 为什么是 1.98.1 而不是 1.98.0：
+#   1.98.0 存在已知的 rustc vtable 误编译缺陷（rust-lang/rust#161441），
+#   已在 1.98.1 修复。锁到 patch 位可从工具链层面阻止使用有问题的版本。
+#
+# 下一版 stable（1.99.0）预计 2026-10 初发布，届时可评估升级。
+[toolchain]
+channel = "1.98.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
