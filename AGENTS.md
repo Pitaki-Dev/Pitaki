@@ -54,6 +54,9 @@ Web 端用同一份 Vite 静态构建。阅读引擎是 **foliate-js**。
 | R11 | **不要把引擎源码复制进 `src/`** | `view.js` 用相对路径 `./vendor/zip.js` 解析，目录结构必须保持 |
 | R12 | **不要「顺手」重构文档或重命名目录** | 文档是经过实测的，改动需先说明理由 |
 
+> ℹ️ **R3 / R4 / R5 属于 PDF 相关约束**。PDF 已推迟到 Phase 7，
+> **当前 Step 0 / Step 1 不涉及**，做到 PDF 时再启用这三条。
+
 ---
 
 ## 4. 环境与版本（已锁定）
@@ -103,44 +106,45 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 ### Step 0 — 引擎可行性验证 spike（最高优先级）
 
-**为什么先做这个**：整个方案里唯一还没被实证的一环就是「zip.js 随机访问 + pdfjs vendor 产物能否真正跑通」。
+**为什么先做这个**：整个方案里唯一还没被实证的一环就是
+「**zip.js 的 `File` 随机访问能否真的做到不整体载入内存**」。
 **如果这步失败，后面的骨架搭了也是白搭。**
+
+> 🚫 **PDF 不在本步范围内。** 上游把 PDF 适配器标记为
+> *"proof-of-concept, highly experimental"*，本项目决定**推迟到 Phase 7** 再评估。
+> Step 0 只验证 **EPUB** 路径。
 
 在 `spike/` 目录做一个**一次性验证**，不追求工程质量。
 
 #### 环境约定
 
-- **独立 `spike/package.json`** —— 不要把 `@zip.js/zip.js` / `fflate` / `pdfjs-dist` / `vite`
-  装到仓库根，避免污染 Step 1 的骨架。`spike/` 整体加入 `.gitignore`。
+- **独立 `spike/package.json`** —— 不要把 `@zip.js/zip.js` / `fflate` / `vite`
+  装到仓库根，避免污染 Step 1 的骨架。`spike/` 整体已加入 `.gitignore`。
+  （**不需要 `pdfjs-dist`**，PDF 已推迟。）
 - 引擎副本与其 vendor 产物也放在 `spike/public/foliate/`，保证整体可丢弃。
 - **不要用 `--host` 通过局域网 IP 访问**（`http://192.168.x.x:5173` **不是安全上下文**，
   会让 Web Crypto SHA-1 失效、字体去混淆报错）。一律用 `http://localhost:5173`。
 - **纯 Vite dev server 不设 CSP**，所以这里验证的是「渲染成功 + 控制台无报错」，
   **不是**「符合 CSP」。CSP 的严格性留到 Step 1 —— 但
-  **Step 1 必须在 Tauri 窗口内把 A/B/C 原样重跑一遍**，因为那才是真实运行环境。
+  **Step 1 必须在 Tauri 窗口内把 A/B 原样重跑一遍**，因为那才是真实运行环境。
 
 #### 要做的事
 
-1. **复制引擎到能跑的位置**，保持上游目录结构：
+1. **复制引擎源码，只打两个 vendor 产物**（保持相对路径）：
+
    ```
    public/foliate/
-   ├── view.js  epub.js  mobi.js  pdf.js  ...   ← submodule 内容整体拷贝
+   ├── view.js  epub.js  mobi.js  fb2.js  ...   ← submodule 源码整体拷贝
    └── vendor/
        ├── zip.js          ← rollup 打包 @zip.js/zip.js
-       ├── fflate.js       ← rollup 打包 fflate（仅 export { unzlibSync }）
-       └── pdfjs/
-           ├── pdf.mjs
-           ├── pdf.worker.mjs
-           ├── text_layer_builder.css
-           ├── annotation_layer_builder.css
-           ├── cmaps/
-           └── standard_fonts/
+       └── fflate.js       ← rollup 打包 fflate（仅 export { unzlibSync }）
    ```
+
    **注意**：`view.js` 用 `await import('./vendor/zip.js')`（相对自身），
-   `pdf.js` 用 `new URL('vendor/pdfjs/...', import.meta.url)`。
-   所以 `vendor/` 必须与 `view.js` / `pdf.js` **同级**，否则 404。
+   所以 `vendor/` 必须与 `view.js` **同级**，否则 404。
 
 2. **两个打包入口**（参考上游 `rollup.config.js`）：
+
    ```js
    // zip 入口
    export { configure, ZipReader, BlobReader, TextWriter, BlobWriter } from '@zip.js/zip.js'
@@ -148,16 +152,12 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
    export { unzlibSync } from 'fflate'
    ```
 
-3. **拷贝 pdfjs 资源**：`pdf.mjs`、`pdf.worker.mjs`、`cmaps/`、`standard_fonts/`，
-   以及从 pdf.js 仓库 tag **v5.5.207** 取 `web/text_layer_builder.css` 与 `web/annotation_layer_builder.css`。
-
-4. **用 Vite 起一个最小页面**，跑三个验证：
+3. **用 Vite 起一个最小页面**，跑两个验证：
 
    | 验证 | 方法 | 通过标准 |
    |---|---|---|
    | **A. ZIP 随机访问** | 统计 `ZipReader` 实际读取的字节数（见下方「计数方法」） | 打开 >10MB 的 **EPUB** 时，读取量 **< 文件大小的 10%**，且**不随文件增大而线性增长** |
-   | **B. 中文 PDF** | 打开**含中文**的 PDF | 文字正常显示、可选中、**无方块/乱码**；且缺失 `cmaps` 时**必须失败**（见下） |
-   | **C. iframe + blob 渲染** | 打开 EPUB，检查章节是否渲染 | 正文可见、可翻页，控制台无报错 |
+   | **B. iframe + blob 渲染** | 打开 EPUB，检查章节是否渲染 | 正文可见、可翻页，控制台无报错 |
 
    **计数方法（A）**：不要用 `Proxy` —— 它可能破坏 `instanceof Blob` 判断。
    直接覆盖 **File 实例上的 `slice`** 即可，zip.js 的 `BlobReader` 正是靠 `blob.slice()` 读取：
@@ -181,17 +181,12 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
    ℹ️ **不需要 HTTP range 方案。** 那是给远程 URL 用的；Pitaki 通过 Tauri fs 读**本地文件**，
    走的是 `File`/`Blob` 路径。HTTP range 要到 Phase 7（OPDS/云同步）才有意义。
 
-   **B 的反向验证（重要）**：现代工具生成的 PDF 常自带 `ToUnicode`，
-   **即使没有 `cmaps` 也能正常显示** —— 那样这个测试就是**假阳性**。
-   所以必须做一次**变异测试**：临时把 `vendor/foliate/pdfjs/cmaps/` 改名，
-   确认该 PDF **确实出现乱码**，再改回来。**测试能失败，才证明它有效。**
-
-5. **记录证据**：截图或日志；A 的文件大小 vs 实际读取量对比、B 的选中效果与变异测试结果。
+4. **记录证据**：截图或日志；A 的文件大小 vs 实际读取量对比。
 
 #### 完成标准（DoD）
 
-- [ ] 三个验证全部通过，或**明确指出哪一项失败及原因**
-- [ ] B 的**变异测试**已做，且确认缺 `cmaps` 时会失败
+- [ ] 两个验证全部通过，或**明确指出哪一项失败及原因**
+- [ ] 确认打开 EPUB 时**没有**把整个文件读进内存（A 的实测数据）
 - [ ] 记下 `spike/public/vendor/foliate/` 的**产物体积**
 - [ ] 记下实际可用的加载路径（`/foliate/view.js` 能否被 Vite dev server 正常解析）
 - [ ] 记下所用 **foliate-js 的 commit hash**
@@ -205,7 +200,7 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 - 完整报错 / 控制台输出
 - 你已排除的可能
 - 你判断的根因
-- 建议的替代方案（例如 PDF 推迟到 Phase 7）
+- 建议的替代方案
 
 ---
 
@@ -321,7 +316,7 @@ PDF（实验性）、书签/高亮/笔记、全文搜索、云同步、OPDS、TT
 
 1. 你对项目的一句话理解；
 2. 你打算怎么执行 **Step 0**（具体到要跑哪些命令、验证什么）；
-3. 你需要的输入（例如：测试用的 EPUB / 含中文的 PDF 样本，是否已有？）；
+3. 你需要的输入（例如：**一个 >10MB 的 EPUB 样本**，是否已有？）；
 4. 任何你认为本文件没说清的地方。
 
 **等用户确认后再动手。**
