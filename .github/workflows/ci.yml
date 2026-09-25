@@ -3,7 +3,21 @@ name: CI
 on:
   push:
     branches: [main]
+    # 纯文档改动不触发 CI。
+    #
+    # 这里用「排除列表」而非「白名单」是刻意的：
+    #   排除列表的失败模式 = 新增了非代码文件时多跑一次（无害）；
+    #   白名单的失败模式 = 新增了源码目录却忘了加进来 → CI 静默不覆盖（危险）。
+    # 所以只排除确定与构建无关的文件。
+    #
+    # ⚠️ 若将来给 main 开了分支保护并把 CI 设为必需检查，文档-only 的 PR
+    #    会因为「检查未上报」而无法合并。届时需改用白名单或拆成两个工作流。
+    paths-ignore: &paths-ignore
+      - '**.md'
+      - 'LICENSE'
+      - 'NOTICE'
   pull_request:
+    paths-ignore: *paths-ignore
 
 jobs:
   frontend:
