@@ -164,6 +164,7 @@ pnpm run tauri:dev         # 桌面端开发
 |---|---|---|
 | `tsc` 启动即 panic：`bundled: …/store/v3/files/…/lib.d.ts does not exist` | TypeScript 7 是**原生（Go）编译器**，自带 platform binary，与 pnpm 的硬链接存储不兼容 | 已在 `.npmrc` 设 `package-import-method=copy`，**不要删** |
 | `vite build` 报缺 `esbuild` | Vite 8 默认 minifier 已切换，`minify: 'esbuild'` 需额外安装 | 用 `minify: 'oxc'`（仓库已配置） |
+| Playwright 启动后立刻断开 / 卡住 | **受限容器**（无 `/dev/shm`、无 GPU）下 Chromium 的 GPU/renderer 进程崩溃 —— 与 CPU 架构无关 | 别在本机硬跑，**用 CI 验证**（见 [docs/VERIFY.md](docs/VERIFY.md)） |
 
 ---
 
@@ -177,6 +178,7 @@ pnpm run tauri:dev         # 桌面端开发
 | [docs/UI.md](docs/UI.md) | **响应式与触摸**：引擎已有的手势、断点、触摸目标、陷阱 |
 | [docs/DATA-MODEL.md](docs/DATA-MODEL.md) | SQLite 表结构、状态管理与同步策略 |
 | [docs/TAURI.md](docs/TAURI.md) | capabilities / ACL、CSP、安全上下文 |
+| [docs/VERIFY.md](docs/VERIFY.md) | **验证体系**：两套工具、CI、本地限制 |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | 分阶段实施计划 |
 | [docs/RISKS.md](docs/RISKS.md) | 风险登记表与已知限制 |
 | [docs/LICENSING.md](docs/LICENSING.md) | 依赖许可证审计结果与结论 |

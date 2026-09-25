@@ -19,6 +19,8 @@
 | R9 | **误装 npm 上的非官方 `foliate-js` 包** | 中 | 高 | 只用 submodule，禁止 `npm i foliate-js` |
 | R10 | **自定义主题只改少量变量**导致对比度异常 | 中 | 低 | 用 Theme Builder 导出完整 token |
 | R11 | **同名/重名书籍**导致 `path` 冲突 | 低 | 中 | `id` 用内容哈希而非路径 |
+| R12 | **临时 IPC 命令随 release 发布**（曾发生：两个无路径校验的任意文件读写 command 无条件注册进 release） | 中 | **高** | 所有临时命令放 `src-tauri/src/dev_smoke.rs` 并 `#[cfg(debug_assertions)]` 门控；已用 `grep -a` 扫 release 二进制确认符号消失（R19） |
+| R13 | **测试工具反客为主**（曾发生：`tools/` 883 行 vs 应用代码 1,028 行 = 86%） | 中 | 中 | 新增工具前先问「它防的是哪个**已发生过**的回归」，答不上来不加 |
 
 ---
 

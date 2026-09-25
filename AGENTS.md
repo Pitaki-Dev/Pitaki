@@ -58,6 +58,8 @@ Web 端用同一份 Vite 静态构建。阅读引擎是 **foliate-js**。
 | R15 | **不要删 `.npmrc` 的 `package-import-method=copy`** | TypeScript 7 是原生编译器，与 pnpm 硬链接存储不兼容，会启动即 panic |
 | R16 | **不要自己实现滑动翻页；不要给 `foliate-view` 再挂 `touchmove`** | 引擎 paginator **已内置**滑动 + 惯性翻页，且已 `preventDefault()`，重复实现会打架 |
 | R17 | **UI 必须响应式且支持触摸**（不可后补） | 目标含桌面触屏 / 平板 / 手机 Web。触摸目标 ≥44px、悬停态要有等价物、不用 UA 嗅探。见 [docs/UI.md](docs/UI.md) |
+| R18 | **dev/测试代码不许放进 `src/`，也不许进 `dist`** | 冒烟 harness 曾占 `src/` 的 34%，还织进了 App 与 ReaderPage。工具放 `tools/`，页面用根目录 `smoke.html`（vite build 只构建 `index.html`） |
+| R19 | **Rust 临时命令必须 `#[cfg(debug_assertions)]` 门控** | 未门控的临时命令会随 release 发布。曾有两个**无路径校验的任意文件读写** command（`smoke_read_book` / `smoke_write_result`）进了 release |
 
 > ℹ️ **R3 / R4 / R5 属于 PDF 相关约束**。PDF 已推迟到 Phase 7，
 > **当前 Step 0 / Step 1 不涉及**，做到 PDF 时再启用这三条。
@@ -102,6 +104,20 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 ---
 
+## 4.5 验证体系
+
+**完整说明见 [docs/VERIFY.md](docs/VERIFY.md)。** 这里只留操作要点：
+
+- 两套工具互补：`pnpm tauri:smoke`（真 Tauri：CSP / WebKitGTK / 运行时注入 / IPC）、
+  `pnpm verify:epub|ui|snapshot`（Chromium：EPUB 回归 / UI 26 项 / 视觉）
+- ⚠️ **本地受限容器跑不了 Chromium**（GPU/renderer 崩、`/dev/shm` 不可用）。
+  **不要在本机反复尝试** —— `git push` 后看 CI：`gh run view <id> --log-failed`
+- 「Chromium 绿了」≠「Tauri 绿了」：实测同一本书 WebKit 加载了 36 张图、
+  Chromium 只加载 1.29%。**两边都要过**
+- **新增工具前先问：它防的是哪个已发生过的回归？** 答不上来就别加
+
+---
+
 ## 5. 分步执行计划
 
 > **铁律：一次只做一个 Step，做完停下来汇报，等确认再继续。**
@@ -109,114 +125,25 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 ---
 
-### Step 0 — 引擎可行性验证 spike（最高优先级）
+### Step 0 — 引擎可行性验证 ✅ 已完成
 
-**为什么先做这个**：整个方案里唯一还没被实证的一环就是
-「**zip.js 的 `File` 随机访问能否真的做到不整体载入内存**」。
-**如果这步失败，后面的骨架搭了也是白搭。**
+> **结论见 [docs/SPIKE-FINDINGS.md](docs/SPIKE-FINDINGS.md)。不要重做。**
+> 验证能力已固化为常驻工具（见 §4.5），要复跑 A/B 直接用它们，**不要再临时搭 `spike/` 目录**。
 
-> 🚫 **PDF 不在本步范围内。** 上游把 PDF 适配器标记为
-> *"proof-of-concept, highly experimental"*，本项目决定**推迟到 Phase 7** 再评估。
-> Step 0 只验证 **EPUB** 路径。
+#### 环境约定（仍然适用）
 
-在 `spike/` 目录做一个**一次性验证**，不追求工程质量。
-
-#### 环境约定
-
-- **独立 `spike/package.json`** —— 不要把 `@zip.js/zip.js` / `fflate` / `vite`
-  装到仓库根，避免污染 Step 1 的骨架。`spike/` 整体已加入 `.gitignore`。
-  （**不需要 `pdfjs-dist`**，PDF 已推迟。）
-- 引擎副本与其 vendor 产物也放在 `spike/public/foliate/`，保证整体可丢弃。
+- ⚠️ **本地沙箱是 aarch64 且资源受限，跑不了 Chromium**（GPU/renderer 崩、`/dev/shm` 不可用）。
+  **浏览器侧验证一律走 CI**，不要在本机反复尝试 —— 详见 §4.5。
 - **不要用 `--host` 通过局域网 IP 访问**（`http://192.168.x.x:5173` **不是安全上下文**，
   会让 Web Crypto SHA-1 失效、字体去混淆报错）。一律用 `http://localhost:5173`。
-- **纯 Vite dev server 不设 CSP**，所以这里验证的是「渲染成功 + 控制台无报错」，
-  **不是**「符合 CSP」。CSP 的严格性留到 Step 1 —— 但
-  **Step 1 必须在 Tauri 窗口内把 A/B 原样重跑一遍**，因为那才是真实运行环境。
+- Vite dev server **不设 CSP**；要验 CSP 必须用 `pnpm tauri:smoke`。
 
-#### 要做的事
+#### 已验证的结论（摘要）
 
-1. **复制引擎源码，只打两个 vendor 产物**（保持相对路径）：
-
-   ```
-   public/foliate/
-   ├── view.js  epub.js  mobi.js  fb2.js  ...   ← submodule 源码整体拷贝
-   └── vendor/
-       ├── zip.js          ← rollup 打包 @zip.js/zip.js
-       └── fflate.js       ← rollup 打包 fflate（仅 export { unzlibSync }）
-   ```
-
-   **注意**：`view.js` 用 `await import('./vendor/zip.js')`（相对自身），
-   所以 `vendor/` 必须与 `view.js` **同级**，否则 404。
-
-2. **两个打包入口** —— ⚠️ **zip 入口必须用相对路径**，否则产物大 3.3 倍：
-
-   ```js
-   // zip 入口：相对路径，绕过 package.json 的 exports 映射
-   export { configure, ZipReader, BlobReader, TextWriter, BlobWriter }
-       from '../node_modules/@zip.js/zip.js/lib/zip-core.js'
-
-   // fflate 入口
-   export { unzlibSync } from 'fflate'
-   ```
-
-   | 写法 | 解析到 | 产物体积 |
-   |---|---|---|
-   | `from '@zip.js/zip.js'` | 包根 `index.js`（完整构建） | **122 KB** ❌ |
-   | `from '@zip.js/zip.js/lib/zip-core.js'` | exports → `zip-core-wasm.js`（WASM 变体） | 不可控 ⚠️ |
-   | **相对路径 → `lib/zip-core.js`** | 仅 `zip-core-base.js` | **36 KB** ✅ |
-
-   **体积断言**：产物应 ≈ 36 KB，明显超出即说明入口写错了。
-
-3. **用 Vite 起一个最小页面**，跑两个验证：
-
-   | 验证 | 方法 | 通过标准 |
-   |---|---|---|
-   | **A. ZIP 随机访问** | 统计 `ZipReader` 实际读取的字节数（见下方「计数方法」） | 打开 >10MB 的 **EPUB** 时，读取量 **< 文件大小的 10%**，且**不随文件增大而线性增长** |
-   | **B. iframe + blob 渲染** | 打开 EPUB，检查章节是否渲染 | 正文可见、可翻页，控制台无报错 |
-
-   **计数方法（A）**：不要用 `Proxy` —— 它可能破坏 `instanceof Blob` 判断。
-   直接覆盖 **File 实例上的 `slice`** 即可，zip.js 的 `BlobReader` 正是靠 `blob.slice()` 读取：
-
-   ```js
-   const origSlice = file.slice.bind(file)
-   let bytes = 0, calls = 0
-   file.slice = (...args) => {
-     const b = origSlice(...args)
-     calls++; bytes += b.size
-     console.log('[slice]', args[0], args[1], '→', b.size)
-     return b
-   }
-   ```
-
-   （若 zip.js 不按预期走 `slice`，再退回「包一层 Blob 兼容对象」的方案。）
-
-   ⚠️ **必须用 EPUB 测随机访问，不要用 MOBI。** 引擎对 MOBI 会「一次性解压全部文本」
-   （上游 README 明示）—— 读满整个文件属**预期行为**，不是失败。
-
-   ℹ️ **不需要 HTTP range 方案。** 那是给远程 URL 用的；Pitaki 通过 Tauri fs 读**本地文件**，
-   走的是 `File`/`Blob` 路径。HTTP range 要到 Phase 7（OPDS/云同步）才有意义。
-
-4. **记录证据**：截图或日志；A 的文件大小 vs 实际读取量对比。
-
-#### 完成标准（DoD）
-
-- [ ] 两个验证全部通过，或**明确指出哪一项失败及原因**
-- [ ] 确认打开 EPUB 时**没有**把整个文件读进内存（A 的实测数据）
-- [ ] 记下产物体积（实际路径是 `spike/public/foliate/vendor/`），并用 **≈36 KB** 对 `zip.js` 做断言
-- [ ] 确认加载路径：**`import()` 必定失败**（Vite 禁 import `public/` 下的 JS），
-      必须用 `<script type="module" src="/foliate/view.js">` + `customElements.whenDefined('foliate-view')`
-- [ ] 记下所用 **foliate-js 的 commit hash**
-- [ ] 结论写入 **`docs/SPIKE-FINDINGS.md` 并提交**（spike 代码本身丢弃即可）
-- [ ] 向用户汇报，**等待确认后再进 Step 1**
-
-#### 🛑 失败时的处理
-
-任一验证失败 → **立即停止，不要继续搭骨架**。把以下信息一并汇报：
-
-- 完整报错 / 控制台输出
-- 你已排除的可能
-- 你判断的根因
-- 建议的替代方案
+- `view.open(file)` **不渲染任何章节**，必须再调 `init()` / `goTo()`（见 [ENGINE.md §4](docs/ENGINE.md)）
+- `view.goTo(target)` 只接受 number / `{fraction}` / CFI / href，**不接受 `{index, anchor}`**（见 §5.1）
+- `import()` **无法**加载 `public/` 下的 JS，必须用 `<script type="module" src>`
+- zip.js 的 `File` 随机访问成立：12.49 MiB EPUB 只读 0.69%
 
 ---
 
@@ -237,7 +164,7 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 **DoD**：
 - [ ] `pnpm tauri:dev` 能启动窗口，控制台无报错
 - [ ] `pnpm build:vendor` 能重复产出一致的 vendor 产物
-- [ ] **在 Tauri 窗口内重跑 Step 0 的 A/B/C 三项验证并全部通过**
+- [ ] **在 Tauri 窗口内重跑 A/B 并全部通过**：`pnpm tauri:smoke`
       —— 浏览器能跑通 ≠ Tauri 能跑通（真实差异在 CSP 与安全上下文）
 
 ---

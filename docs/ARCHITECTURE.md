@@ -81,9 +81,13 @@ foliate-js 官方 README 明确声明：
 Pitaki/
 ├── third_party/
 │   └── foliate-js/                 # git submodule，锁定 commit，勿改
-├── scripts/
-│   ├── build-foliate-vendor.mjs    # 生成 public/vendor/foliate/*
-│   └── sync-foliate.mjs            # 同步引擎到 public/foliate/
+├── scripts/                        # 构建脚本
+│   ├── build-foliate-vendor.mjs    # 生成 public/foliate/vendor/*
+│   ├── sync-foliate.mjs            # 同步引擎（allowlist + 产物断言）
+│   └── generate-icons.mjs
+├── tools/                          # 验证工具（不进产物，见 AGENTS.md §4.5）
+│   ├── tauri-smoke/                # Tauri 内冒烟：CSP / WebKitGTK / 运行时注入 / IPC
+│   └── verify/                     # Chromium 侧：EPUB 回归 / UI 26 项 / 视觉快照
 ├── public/
 │   └── foliate/                    # 引擎副本（保留上游目录结构）
 │       ├── view.js  epub.js  mobi.js  fb2.js  ...
@@ -95,27 +99,28 @@ Pitaki/
 │               ├── pdf.worker.mjs
 │               ├── cmaps/          # ★ 中文 PDF 必需
 │               └── standard_fonts/
-├── src/
-│   ├── components/                 # HeroUI 二次封装 + 业务组件
+├── src/                            # 应用代码（11 文件 / 693 行）
+│   ├── components/                 # 外壳组件（AppShell）
 │   ├── pages/                      # 书库 / 阅读器 / 设置
 │   ├── stores/                     # Zustand stores
 │   ├── lib/
-│   │   ├── reader/
-│   │   │   ├── foliate/
-│   │   │   │   └── adapter.ts      # ★ L2 适配层
-│   │   │   ├── theme.ts            # 书页主题注入
-│   │   │   └── progress.ts         # 进度节流
-│   │   ├── db.ts                   # SQLite 封装
-│   │   └── vendor.ts               # 引擎动态加载
+│   │   ├── router.ts               # 手写 hash 路由（不引 React Router）
+│   │   ├── vendor.ts               # 引擎加载（运行时 <script> 注入）
+│   │   └── reader/                 # 📋 Step 3：L2 适配层（foliate/ theme/ progress/）
 │   ├── styles/
-│   │   └── globals.css             # Tailwind + HeroUI + 主题 token
+│   │   └── globals.css             # Tailwind + HeroUI（按组件引入）+ 主题 token
 │   ├── App.tsx
 │   └── main.tsx
 ├── src-tauri/                      # Tauri + Rust
 │   ├── src/
+│   │   ├── lib.rs                  # 插件注册（release 不含 dev 命令）
+│   │   └── dev_smoke.rs            # 冒烟命令，仅 debug 编译（R19）
 │   ├── capabilities/               # ★ v2 权限配置
+│   ├── tauri.smoke.conf.json       # 仅 pnpm tauri:smoke 时覆盖 devUrl
 │   ├── Cargo.toml
 │   └── tauri.conf.json
+├── smoke.html                      # dev-only 冒烟页（vite build 不构建它）
+├── index.html
 ├── docs/
 ├── package.json
 ├── vite.config.ts

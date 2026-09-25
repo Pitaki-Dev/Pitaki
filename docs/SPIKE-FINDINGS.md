@@ -3,8 +3,20 @@
 [← 返回 README](../README.md)
 
 > **状态：两项验证全部通过（A. ZIP 随机访问 ✅ / B. iframe + blob 渲染 ✅）。**
-> 一次性 spike 代码位于 `spike/`（已 gitignore，**不入库**），本文档是唯一交付物。
 > PDF 不在本次范围内（推迟到 Phase 7）；本步只跑 EPUB 路径。
+>
+> ⚠️ **文档性质**：这是 **Step 0 的历史记录**，其中的路径与数字保持当时原貌，不改写。
+> 当时的 `spike/` 临时目录**已删除**，验证能力已固化为常驻工具：
+>
+> | 当时 | 现在 |
+> |---|---|
+> | `spike/tools/gen-sample.mjs` | `tools/verify/gen-sample.mjs`（`pnpm gen:sample`） |
+> | `spike/tools/run-spike.mjs` | `tools/verify/run-spike.mjs`（`pnpm verify:epub`） |
+> | `spike/public/foliate/` | `public/foliate/`（正式产物） |
+> | 应用内 harness（`src/dev/spike.ts`，317 行） | `tools/tauri-smoke/`（`pnpm tauri:smoke`） |
+> | `PITAKI_SPIKE_*` | `PITAKI_SMOKE_*` |
+>
+> 复跑方式见 [AGENTS.md §4.5](../AGENTS.md)。
 
 ---
 
@@ -172,7 +184,10 @@ TypeError: href.split is not a function  at EPUB.resolveHref
 
 ---
 
-## 6. 复现步骤（spike 已丢弃，仅记录）
+## 6. 复现步骤（历史记录）
+
+> 下面的命令是**当时**的形态，`spike/` 已删除。要现在复跑，用
+> `pnpm gen:sample` / `pnpm verify:epub` / `pnpm tauri:smoke`（见 [AGENTS.md §4.5](../AGENTS.md)）。
 
 ```bash
 # 1. 引擎源码（spike/ 内，可整体删除）
