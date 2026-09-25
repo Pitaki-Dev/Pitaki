@@ -58,6 +58,9 @@
 - [ ] L2 适配层：`open()` + `relocate` + `load` 打通
 - [ ] 打开本地 EPUB，确认渲染正常
 - [ ] 目录（TOC）渲染
+- [ ] **真实书覆盖**：合成样本测不到怪结构 —— 已观察到某本中文 EPUB
+      **532 个 section 却只有 3 条目录项**。加 `schedule` + `workflow_dispatch`
+      的独立 CI job（pin URL + 校验 sha256，**不进 push/PR 路径**）→ [VERIFY.md §6.2](VERIFY.md)
 
 ## Phase 4 — 阅读体验
 

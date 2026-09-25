@@ -85,12 +85,36 @@ CI 的 `verify` job 是**权威**：它在正常 runner 上跑 `verify:epub` + `
 
 ---
 
-## 6. 待定
+## 6. 两个已决定的事项
 
-- **真实书 CI 覆盖**：建议加成 `schedule` + `workflow_dispatch` 的**独立 job**，
-  不进 push/PR 路径 —— 否则网络抖动会让每次 push 变红。等文档更新时一并决定。
-- Node 20 deprecation 警告：把 action 升到 target Node 24 的版本，或设
-  `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`。目前只是警告。
+### 6.1 Action 版本：升到最新 major（Node 24）
+
+当前所有 action 都 target Node 20（已 EOL），GitHub 现在强制它们跑在 Node 24 上并给出警告。
+
+| Action | 现在 | 目标 | 最新 major 的运行时 |
+|---|---|---|---|
+| `actions/checkout` | v4 | **v7** | node24 |
+| `actions/setup-node` | v4 | **v7** | node24 |
+| `actions/upload-artifact` | v4 | **v7** | node24 |
+| `pnpm/action-setup` | v4 | **v6** | node24 |
+
+⚠️ **`setup-node` v5+ 的一个坑**：当 `package.json` 有 `packageManager` 字段时（本项目有：
+`pnpm@9.15.9`），它会**自动启用缓存**，可能与现有的显式 `cache: pnpm` 冲突。
+若 CI 报缓存配置错误，设 `package-manager-cache: false` 并保留显式缓存。
+
+> 为什么不直接设 `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`：那只是把警告压下去，
+> Node 20 的 action 迟早会失效。自己挑时间升，好过被逼着升。
+
+### 6.2 真实书 CI 覆盖：**推迟到 Step 3**
+
+按 [§7](#7-别把测试当产品代码) 的规则自问「它防的是哪个已发生过的回归？」——
+**真实书目前还没抓出过回归**，所以现在不加。
+
+但已经**观察到过一个合成样本测不到的异常**：某本中文 EPUB 有 **532 个 section 却只有 3 条目录项**。
+这类怪结构正是真实书的价值所在。因此把它作为 **Step 3 的验收项**记入
+[ROADMAP.md](ROADMAP.md)：等 L2 适配层落地、真实书成为真实输入时再加，
+形式为 `schedule` + `workflow_dispatch` 的**独立 job**，**不进 push/PR 路径**
+（否则网络抖动会让每次 push 变红）。样本需 pin URL + 校验 sha256。
 
 ---
 
