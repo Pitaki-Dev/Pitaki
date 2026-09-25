@@ -89,6 +89,7 @@ pnpm run gen:sample       # 生成确定性样本
 | R17 | **UI 必须响应式且支持触摸**（不可后补） | 触摸目标 ≥44px、悬停态要有等价物、不用 UA 嗅探 → [docs/UI.md](docs/UI.md) |
 | R18 | **dev/测试代码不许进 `src/`，也不许进 `dist`** | 工具放 `tools/`；页面用根目录 `smoke.html`（vite build 只构建 `index.html`） |
 | R19 | **Rust 临时命令必须 `#[cfg(debug_assertions)]` 门控** | 未门控会随 release 发布。曾有两个**无路径校验的任意文件读写** command 进了 release |
+| R20 | **禁止 `any`**（含 `as any` / `<any>` / `Array<any>`）；**不得放宽 tsconfig 严格档位** | 见 §5。放宽必须先在提交信息里写明理由 —— `skipLibCheck` 曾被静默改回 `true` |
 
 > ℹ️ **R3 / R4 / R5 是 PDF 相关约束**。PDF 推迟到 Phase 7，当前不涉及。
 
@@ -102,8 +103,21 @@ pnpm run gen:sample       # 生成确定性样本
 | 缩进 | 2 空格 |
 | 注释 | **中文**，解释**为什么**而不是「是什么」 |
 | 类型导入 | `verbatimModuleSyntax` 已开 → 必须写 `import { useState, type ReactNode }` |
-| 严格度 | tsconfig 最严格档：`strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` + `noImplicitOverride` + `verbatimModuleSyntax` |
 | 抽象 | **不要为未来预留抽象**。少 wrapper、少 Provider；注释解释取舍 |
+
+### TypeScript 严格度（R20）
+
+**已开到业界最严**：`strict` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` +
+`noImplicitOverride` + `noImplicitReturns` + `noPropertyAccessFromIndexSignature` +
+`noUnusedLocals` + `noUnusedParameters` + `noFallthroughCasesInSwitch` +
+`allowUnreachableCode: false` + `allowUnusedLabels: false` + `isolatedModules` +
+`verbatimModuleSyntax` + `erasableSyntaxOnly` + `moduleDetection: force`。
+
+| 约束 | 说明 |
+|---|---|
+| **禁止 `any`** | **tsconfig 管不了显式 `any`，必须由 lint 强制**。当前项目尚未接 ESLint（见 ROADMAP Phase 1 遗留项）—— 在接上之前，**靠自觉 + review**，宁可写 `unknown` 再收窄 |
+| **不得放宽严格档位** | 含 `skipLibCheck`。确有必要时**必须在提交信息里写明理由与代价** |
+| `skipLibCheck: true` 的缘由 | **被迫而非选择**。实测 `false` 会产生 10 条**上游** `.d.ts` 错误（HeroUI 的 `orientation` 属性冲突、react-aria-components 的 `GroupProps` 等），我们修不了。另有 6 条来自我们自己的 `src/vite-env.d.ts`（`readonly` 修饰符与 Vite 自带声明不一致），可修 |
 
 ---
 

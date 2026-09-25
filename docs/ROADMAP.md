@@ -38,7 +38,9 @@
 - [x] `git submodule` 引入 foliate-js 并锁定 commit
 - [x] `scripts/build-foliate-vendor.mjs` 跑通（zip.js / fflate；pdfjs 推迟到 Phase 7）
 - [x] CI：typecheck + build + vendor 构建验证（含入口守卫）
-- [ ] CI 尚未接 **lint**
+- [ ] CI 尚未接 **lint** —— 且这是 **R20（禁止 `any`）的唯一强制手段**：
+      tsconfig 管不了显式 `any`，必须靠 ESLint 的 `@typescript-eslint/no-explicit-any`。
+      接上之前禁 `any` 只靠自觉
 
 ## Phase 2 — 界面基础
 
@@ -64,6 +66,9 @@
 - [ ] L2 适配层：`open()` → `init()` → `relocate` / `load` 打通，
       并把 `view.goTo` 与 `renderer.goTo` 的两层签名包平（[ENGINE.md §5.1](ENGINE.md)）
 - [ ] 打开本地 EPUB，确认渲染正常
+- [ ] **TXT 支持**（引擎无内置，需自己实现 `book` 接口）—— 放在这里而不是 Phase 6，是因为
+      它逼着适配层**从一开始就是格式无关的**；若只做 EPUB，适配层很容易长成 EPUB 专用。
+      **难点不是解析，是把大文件切成多个 section**（单个 10 MB 文本做一个 section 会不可用）
 - [ ] 目录（TOC）渲染
 - [ ] **补齐格式覆盖**：README 声称 5 种格式，`verify:epub` 只跑 EPUB。
       MOBI/KF8 走 `unzlibSync`、CBZ 走 `fixed-layout.js`（无触摸处理）、FB2 独立解析器 ——
@@ -88,9 +93,6 @@
 
 ## Phase 6 — 功能完善
 
-- [ ] 纯文本（TXT）导入 —— 引擎支持自定义实现 `book` 接口（上游 README 明示），
-      Readest 已有先例；**难点是把大文件切分成多个 section**
-      （单个 10 MB 文本作为一个 section 会不可用），不是格式解析本身
 - [ ] 书签 / 高亮 / 笔记（Overlayer）
 - [ ] 全文搜索（引擎自带 `search.js`）
 - [ ] 多格式回归验证（EPUB / AZW3 / CBZ / 中文 PDF）

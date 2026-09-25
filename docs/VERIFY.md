@@ -132,6 +132,7 @@ CI 的 `verify` job 跑在标准 GitHub runner 上，是**权威环境**：它�
 | **MOBI / KF8 (AZW3)** | ❌ **从未跑过** | 走 `fflate` 的 `unzlibSync`，HUFF/CDIC 解压是**完全不同的代码路径** |
 | **FB2** | ❌ 从未跑过 | 独立解析器 |
 | **CBZ** | ❌ 从未跑过 | 走 `fixed-layout.js` —— 该渲染器**连触摸处理都没有**（见 [UI.md](UI.md) §2） |
+| **TXT** | ❌ 尚未实现 | 引擎无内置 TXT，需**自己实现 `book` 接口**。难点是把大文件切成多个 section（单个 10 MB 文本做一个 section 会不可用） |
 
 **规则：声称支持的格式必须有对应测试，否则就是文档在撒谎。**
 
