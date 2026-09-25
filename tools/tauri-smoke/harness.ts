@@ -1,12 +1,20 @@
 /**
- * ⚠️ 临时脚本 —— Step 1 验收用（在 Tauri 窗口内复跑 Step 0 的 A/B）。
- * Step 3 落地 L2 适配层（src/lib/reader/foliate/adapter.ts）后删除本文件与 App 里的调用。
+ * Tauri 冒烟 harness（原 src/dev/spike.ts）。
  *
- * A：统计 zip.js 经 File.slice 实际读取的字节数（覆盖实例上的 slice，不用 Proxy）。
- * B：EPUB 渲染进 blob: iframe，正文可见、可翻页、可 relocate，且无 CSP 违规。
+ * 为什么必须留在应用内跑（不能只用 Chromium 侧的 tools/verify/*）：
+ *   1. 真 CSP 强制（frame-src blob: / style-src 'unsafe-inline' / script-src 'self'）——
+ *      Vite dev server 不设 CSP，Chromium 侧永远测不到；
+ *   2. WebKitGTK 渲染栈（与 Chromium 行为不同）；
+ *   3. 应用自己的引擎加载路径（src/lib/vendor.ts 的运行时 <script> 注入）；
+ *   4. Rust↔JS IPC 与 capabilities/ACL。
+ * 浏览器（Playwright/Chromium）侧由 tools/verify/run-spike.mjs 驱动同一个 smoke.html。
+ *
+ * 触发方式：**只由 smoke.html 加载**（`tauri dev --config tauri.smoke.conf.json` 指到该页），
+ * 因此正常 `pnpm tauri:dev` 永远不会跑到它 —— 这就是「显式开启」，不需要额外 env 开关。
+ * Step 3 落地 L2 适配层后，把 loadTauriSamples/runSmoke 的驱动对象从「File」换成
+ * `src/lib/reader/foliate/adapter.ts`，即成为生产取书路径（assetUrl + HttpRangeReader，R14）的验收工具。
  */
-import { invoke } from '@tauri-apps/api/core'
-import { createView, loadEngine } from '../lib/vendor'
+import { createView, loadEngine } from '../../src/lib/vendor'
 
 type FoliateContents = { index: number; doc: Document | null }
 type FoliateView = HTMLElement & {
@@ -43,7 +51,7 @@ interface SectionInfo {
   elements: { p: number; img: number; h1: number } | null
 }
 
-export interface SpikeContext {
+export interface SmokeContext {
   origin: string
   userAgent: string
   isSecureContext: boolean
@@ -51,9 +59,9 @@ export interface SpikeContext {
   cspViolations: string[]
 }
 
-export interface SpikeSampleResult {
+export interface SmokeSampleResult {
   name: string
-  path: string
+  path: string | null
   fileSize: number
   randomAccess: {
     sliceBytes: number
@@ -78,12 +86,19 @@ export interface SpikeSampleResult {
   errors: string[]
 }
 
-export interface SpikeReport {
-  phase: 'step1-tauri-ab'
+export interface SmokeReport {
+  phase: 'tauri-smoke'
   ranAt: string
-  context: SpikeContext
-  samples: SpikeSampleResult[]
+  context: SmokeContext
+  samples: SmokeSampleResult[]
   fatal?: string | undefined
+}
+
+export interface SmokeInput {
+  name: string
+  file: File
+  /** 仅 Tauri 路径有：来源文件的绝对路径（便于复现） */
+  path?: string
 }
 
 const cspViolations: string[] = []
@@ -93,11 +108,11 @@ let capturing = false
 function startCapturing() {
   if (capturing) return
   capturing = true
-  document.addEventListener('securitypolicyviolation', e => {
-    cspViolations.push(`${e.violatedDirective} blocked ${e.blockedURI} (${e.sourceFile}:${e.lineNumber})`)
+  document.addEventListener('securitypolicyviolation', event => {
+    cspViolations.push(`${event.violatedDirective} blocked ${event.blockedURI} (${event.sourceFile}:${event.lineNumber})`)
   })
-  window.addEventListener('error', e => runtimeErrors.push(`error: ${e.message}`))
-  window.addEventListener('unhandledrejection', e => runtimeErrors.push(`unhandledrejection: ${String(e.reason)}`))
+  window.addEventListener('error', event => runtimeErrors.push(`error: ${event.message}`))
+  window.addEventListener('unhandledrejection', event => runtimeErrors.push(`unhandledrejection: ${String(event.reason)}`))
   const original = console.error.bind(console)
   console.error = (...args: unknown[]) => {
     runtimeErrors.push(`console.error: ${args.map(a => String(a)).join(' ')}`)
@@ -106,7 +121,7 @@ function startCapturing() {
 }
 
 function instrument(file: File): SliceMetrics {
-  const m: SliceMetrics = {
+  const metrics: SliceMetrics = {
     fileName: file.name,
     fileSize: file.size,
     bytes: 0,
@@ -121,19 +136,22 @@ function instrument(file: File): SliceMetrics {
   const originalSlice = file.slice.bind(file)
   file.slice = (...args: [number?, number?, string?]) => {
     const blob = originalSlice(...args)
-    m.calls++
-    m.bytes += blob.size
-    m.maxSlice = Math.max(m.maxSlice, blob.size)
+    metrics.calls++
+    metrics.bytes += blob.size
+    metrics.maxSlice = Math.max(metrics.maxSlice, blob.size)
     // >64 KiB 的读取基本都是内容资源（图片/字体），与「容器索引」的随机访问分开统计
-    if (blob.size > 65_536) { m.largeSliceCount++; m.largeSliceBytes += blob.size }
-    if (m.firstSlices.length < 8) m.firstSlices.push([args[0] ?? null, args[1] ?? null, blob.size])
+    if (blob.size > 65_536) {
+      metrics.largeSliceCount++
+      metrics.largeSliceBytes += blob.size
+    }
+    if (metrics.firstSlices.length < 8) metrics.firstSlices.push([args[0] ?? null, args[1] ?? null, blob.size])
     return blob
   }
   const originalStream = file.stream?.bind(file)
-  if (originalStream) file.stream = (...args: []) => { m.streamCalls++; return originalStream(...args) }
+  if (originalStream) file.stream = (...args: []) => { metrics.streamCalls++; return originalStream(...args) }
   const originalArrayBuffer = file.arrayBuffer.bind(file)
-  file.arrayBuffer = (...args: []) => { m.arrayBufferCalls++; return originalArrayBuffer(...args) }
-  return m
+  file.arrayBuffer = (...args: []) => { metrics.arrayBufferCalls++; return originalArrayBuffer(...args) }
+  return metrics
 }
 
 function sleep(ms: number) {
@@ -162,21 +180,26 @@ function sectionInfo(view: FoliateView): SectionInfo {
     iframeHref: href ? href.slice(0, 12) : null,
     isBlobUrl: !!href?.startsWith('blob:'),
     elements: doc
-      ? {
-          p: doc.querySelectorAll('p').length,
-          img: doc.querySelectorAll('img').length,
-          h1: doc.querySelectorAll('h1').length,
-        }
+      ? { p: doc.querySelectorAll('p').length, img: doc.querySelectorAll('img').length, h1: doc.querySelectorAll('h1').length }
       : null,
   }
 }
 
-export async function runSpike(log: (message: string) => void): Promise<SpikeReport> {
-  startCapturing()
-  const env = await invoke<Record<string, string>>('spike_env')
-  const paths = (env['PITAKI_SPIKE_SAMPLES'] ?? '').split(',').map(s => s.trim()).filter(Boolean)
+/** 屏外挂载点：冒烟页与正式页都不需要为它让位 */
+function smokeHost(): HTMLElement {
+  let host = document.getElementById('pitaki-smoke-host')
+  if (!host) {
+    host = document.createElement('div')
+    host.id = 'pitaki-smoke-host'
+    host.style.cssText = 'position:fixed;left:-10000px;top:0;width:700px;height:500px;visibility:hidden'
+    document.body.append(host)
+  }
+  return host
+}
 
-  const context: SpikeContext = {
+export async function runSmoke(files: SmokeInput[], log: (message: string) => void): Promise<SmokeReport> {
+  startCapturing()
+  const context: SmokeContext = {
     origin: location.origin,
     userAgent: navigator.userAgent,
     isSecureContext: window.isSecureContext,
@@ -184,30 +207,18 @@ export async function runSpike(log: (message: string) => void): Promise<SpikeRep
     cspViolations,
   }
 
-  if (!paths.length) {
-    log('[spike] 未配置 PITAKI_SPIKE_SAMPLES，跳过（Tauri 里由 Rust env 提供样本路径）')
-    return {
-      phase: 'step1-tauri-ab',
-      ranAt: new Date().toISOString(),
-      context,
-      samples: [],
-    }
-  }
-
   log(`[env] origin=${context.origin} secureContext=${context.isSecureContext} crypto.subtle=${context.cryptoSubtle}`)
   log(`[env] userAgent=${context.userAgent}`)
+  log(`[env] CSP 违规累计=${cspViolations.length}`)
   log('[engine] 注入 <script type="module" src="/foliate/view.js"> …')
   await loadEngine()
   log('[engine] foliate-view 已注册')
 
-  const samples: SpikeSampleResult[] = []
+  const samples: SmokeSampleResult[] = []
 
-  for (const path of paths) {
-    const name = path.split('/').pop() ?? path
+  for (const { name, file, path } of files) {
     log(`\n=== ${name} ===`)
     try {
-      const buffer = await invoke<ArrayBuffer>('read_book', { path })
-      const file = new File([buffer], name, { type: 'application/epub+zip' })
       const metrics = instrument(file)
       log(`[A] 文件 ${(file.size / 1048576).toFixed(2)} MiB，开始统计 File.slice`)
 
@@ -218,19 +229,8 @@ export async function runSpike(log: (message: string) => void): Promise<SpikeRep
       view.style.height = '500px'
       let loads = 0
       view.addEventListener('load', () => { loads++ })
-      view.addEventListener('error', (e: Event) => errors.push(`view error: ${String((e as CustomEvent).detail)}`))
-      // 自己建一个屏外容器：Step 2 之后 App 里不再有 spike 专用的挂载点
-      const host = (() => {
-        let element = document.getElementById('pitaki-spike-host')
-        if (!element) {
-          element = document.createElement('div')
-          element.id = 'pitaki-spike-host'
-          element.style.cssText = 'position:fixed;left:-10000px;top:0;width:700px;height:500px;visibility:hidden'
-          document.body.append(element)
-        }
-        return element
-      })()
-      host.replaceChildren(view)
+      view.addEventListener('error', (event: Event) => errors.push(`view error: ${String((event as CustomEvent).detail)}`))
+      smokeHost().replaceChildren(view)
 
       const t0 = performance.now()
       await view.open(file)
@@ -269,12 +269,12 @@ export async function runSpike(log: (message: string) => void): Promise<SpikeRep
         largeSliceBytes: metrics.largeSliceBytes,
       }
       log(`[A] open() 阶段 ${bytesAfterOpen} B（${((bytesAfterOpen / file.size) * 100).toFixed(2)}%）→ 首节渲染 ${bytesAfterFirstRender} B → 导航后 ${bytesAfterNavigation} B（${randomAccess.slicePercent}%）`)
-      log(`[A] 其中大块读取（>64 KiB，内容资源）${metrics.largeSliceCount} 次 / ${metrics.largeSliceBytes} B；stream=${metrics.streamCalls}，arrayBuffer=${metrics.arrayBufferCalls}`)
+      log(`[A] 大块读取（>64 KiB，内容资源）${metrics.largeSliceCount} 次 / ${metrics.largeSliceBytes} B；stream=${metrics.streamCalls}，arrayBuffer=${metrics.arrayBufferCalls}`)
       log(`[B] 首节 textLen=${firstSection.textLen} blob=${firstSection.isBlobUrl}；中段 textLen=${midSection.textLen} p=${midSection.elements?.p} img=${midSection.elements?.img} CJK=${midSection.containsCJK}`)
 
       samples.push({
         name,
-        path,
+        path: path ?? null,
         fileSize: file.size,
         randomAccess,
         openMs: msAfterOpen,
@@ -299,19 +299,40 @@ export async function runSpike(log: (message: string) => void): Promise<SpikeRep
     }
   }
 
-  const report: SpikeReport = {
-    phase: 'step1-tauri-ab',
+  return {
+    phase: 'tauri-smoke',
     ranAt: new Date().toISOString(),
-    context: { ...context, cspViolations, },
+    context,
     samples,
     fatal: runtimeErrors.length ? runtimeErrors.join('\n') : undefined,
   }
-
-  const out = await invoke<string>('write_spike_result', { content: JSON.stringify(report, null, 2) })
-  log(`\n结果已写入：${out}`)
-  return report
 }
 
 export function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
+
+/**
+ * Tauri 路径：样本清单来自 Rust 侧环境变量 PITAKI_SMOKE_SAMPLES（逗号分隔的绝对路径），
+ * 字节经 tauri::ipc::Response 传回（原始 ArrayBuffer，不走 JSON 数组）。
+ * 注意：这里拿到的是内存 Blob（不是磁盘句柄），所以它证明的是「引擎不会重复整读」；
+ * 真正的磁盘随机访问由浏览器侧（<input type=file>）与 Step 3 的 assetUrl+HttpRangeReader 保证。
+ */
+export async function loadTauriSamples(): Promise<SmokeInput[]> {
+  const { invoke } = await import('@tauri-apps/api/core')
+  const env = await invoke<Record<string, string>>('smoke_env')
+  const paths = (env['PITAKI_SMOKE_SAMPLES'] ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  const inputs: SmokeInput[] = []
+  for (const path of paths) {
+    const name = path.split('/').pop() ?? path
+    const buffer = await invoke<ArrayBuffer>('smoke_read_book', { path })
+    inputs.push({ name, file: new File([buffer], name, { type: 'application/epub+zip' }), path })
+  }
+  return inputs
+}
+
+/** Tauri 路径：把报告落盘（写路径只由 Rust 侧 env 决定，前端只能传内容） */
+export async function writeSmokeReport(report: SmokeReport): Promise<string> {
+  const { invoke } = await import('@tauri-apps/api/core')
+  return invoke<string>('smoke_write_result', { content: JSON.stringify(report, null, 2) })
 }

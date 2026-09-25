@@ -28,5 +28,5 @@
     "allowUnreachableCode": false,
     "allowUnusedLabels": false
   },
-  "include": ["src"]
+  "include": ["src", "tools/tauri-smoke"]
 }

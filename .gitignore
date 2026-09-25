@@ -21,8 +21,8 @@ src-tauri/gen/schemas/
 public/vendor/foliate/
 public/foliate/
 
-# ---- 一次性验证 spike（Step 0），结论另存 docs/SPIKE-FINDINGS.md ----
-spike/
+# ---- 验证工具产物（tools/verify/）----
+tools/verify/artifacts/
 
 # 第三方源码用 git submodule 管理（submodule 路径本身不能出现在 .gitignore 里，
 # 否则 git submodule add 会拒绝该路径）

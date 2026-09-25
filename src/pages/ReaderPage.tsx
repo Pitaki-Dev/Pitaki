@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { Button, Chip, useMediaQuery } from '@heroui/react'
 import { ChevronLeft, ChevronRight, List, Settings2, Type } from 'lucide-react'
 import { resolveFlow, useUiStore } from '../stores/ui'
@@ -14,17 +14,6 @@ export function ReaderPage() {
   const { flowPreference, setFlowPreference } = useUiStore()
   const flow = resolveFlow(flowPreference, isWide)
   const [chromeVisible, setChromeVisible] = useState(true)
-  const [spikeLines, setSpikeLines] = useState<string[]>([])
-
-  const runSpike = useCallback(async () => {
-    setSpikeLines(['运行中…'])
-    // 整个 if 块在 prod 构建里会被 `import.meta.env.DEV → false` 折叠掉
-    if (import.meta.env.DEV) {
-      const { runSpike: run } = await import('../dev/spike')
-      await run(message => setSpikeLines(previous => [...previous, message]))
-    }
-  }, [])
-
   return (
     <section className="relative flex min-h-0 flex-1 flex-col">
       {/* 顶栏：点按画布切换显隐（tap-to-toggle），不靠 hover */}
@@ -94,19 +83,6 @@ export function ReaderPage() {
             <ChevronRight aria-hidden />
           </Button>
         </footer>
-      ) : null}
-
-      {import.meta.env.DEV ? (
-        <div className="border-t border-[var(--border)] bg-[var(--surface-secondary)] p-2">
-          <Button size="lg" variant="ghost" className="pitaki-touch" onPress={() => void runSpike()}>
-            复跑 Step 0/1 的 A/B 验证（dev）
-          </Button>
-          {spikeLines.length ? (
-            <pre className="mt-2 max-h-40 overflow-auto rounded bg-[var(--surface-tertiary)] p-2 text-xs whitespace-pre-wrap">
-              {spikeLines.join('\n')}
-            </pre>
-          ) : null}
-        </div>
       ) : null}
     </section>
   )

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pitaki · Tauri 冒烟页（dev only）</title>
+    <style>
+      body { font: 13px/1.5 system-ui, sans-serif; margin: 12px; background: #111; color: #ddd; }
+      #smoke-log { background: #000; color: #7ee787; padding: 8px; max-height: 70vh; overflow: auto; white-space: pre-wrap; }
+      input { color: #ddd; }
+    </style>
+  </head>
+  <body>
+    <h1 style="font-size: 16px">Pitaki · 引擎冒烟（Tauri 窗口 / Chromium 共用）</h1>
+    <p>
+      A：zip.js 经 <code>File.slice</code> 实际读取多少字节（不整读）·
+      B：EPUB 在 <code>blob:</code> iframe 内渲染并跳转 ·
+      环境：CSP 违规数 / 安全上下文 / WebKit 或 Chromium。
+    </p>
+    <p><input id="smoke-file" type="file" accept=".epub,application/epub+zip" multiple /></p>
+    <pre id="smoke-log"></pre>
+    <!-- 生产入口 index.html 不引这个页面；vite build 也只构建 index.html，不会把冒烟页打进 dist -->
+    <script type="module" src="/tools/tauri-smoke/boot.ts"></script>
+  </body>
+</html>

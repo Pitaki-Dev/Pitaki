@@ -15,7 +15,12 @@
     "prepare:engine": "pnpm sync:foliate && pnpm build:vendor",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "tauri:smoke": "tauri dev --config src-tauri/tauri.smoke.conf.json",
+    "gen:sample": "node tools/verify/gen-sample.mjs",
+    "verify:epub": "node tools/verify/run-spike.mjs",
+    "verify:ui": "node tools/verify/verify-ui.mjs",
+    "verify:snapshot": "node tools/verify/style-snapshot.mjs"
   },
   "dependencies": {
     "@heroui/react": "^3.2.6",
@@ -38,6 +43,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "playwright": "^1.63.0",
     "rollup": "^4.63.3",
     "tailwindcss": "^4.3.3",
     "terser": "^5.46.0",

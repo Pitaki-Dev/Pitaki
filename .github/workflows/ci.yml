@@ -21,9 +21,50 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # L1 → public/foliate 同步（校验 view.js 的相对路径加载仍在，R11）
+      # L1 → public/foliate 同步（校验 view.js 的相对路径加载仍在，R11；allowlist 防止非运行时文件混入）
       - run: pnpm sync:foliate
       # L0 vendor 产物（含 zip.js 体积断言与 R13 入口守卫）
       - run: pnpm build:vendor
       - run: pnpm typecheck
       - run: pnpm build
+
+  # 引擎回归：Chromium 侧验「不整体载入内存 + blob iframe 渲染」与 UI 响应式/触摸。
+  # Tauri（WebKit + 真 CSP）侧的等价检查是 `pnpm tauri:smoke`，需 Linux 系统依赖，暂未进 CI。
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - run: pnpm sync:foliate
+      - run: pnpm build:vendor
+      # 合成一个 >10 MiB 的 EPUB（不入库），作为随机访问回归样本
+      - run: pnpm gen:sample
+
+      - name: 起 dev server
+        run: |
+          nohup pnpm dev > /tmp/vite.log 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -sf http://localhost:5173 >/dev/null && exit 0
+            sleep 1
+          done
+          echo "dev server 起不来"; cat /tmp/vite.log; exit 1
+
+      - run: pnpm verify:epub
+      - run: pnpm verify:ui
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verify-artifacts
+          path: tools/verify/artifacts/

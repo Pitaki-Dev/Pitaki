@@ -22,7 +22,7 @@
  *      当前这几个在 barrel 中的行号：close-button 18 < button 38 < chip 79 < card 125
  *      < separator 127 < drawer 140。乱序的后果：抽屉关闭按钮会掉回文档流（position: relative）。
  *    （useTheme / useMediaQuery / useOverlayState 是 hooks，不需要 CSS）
- *    查漏办法：跑视觉回归脚本 spike/tools/verify-ui.mjs + style-snapshot.mjs（Playwright）。
+ *    查漏办法：跑视觉回归脚本 tools/verify/verify-ui.mjs + style-snapshot.mjs（Playwright）。
  */
 @layer theme, base, components, utilities;
 
