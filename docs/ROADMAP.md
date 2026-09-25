@@ -65,6 +65,9 @@
       并把 `view.goTo` 与 `renderer.goTo` 的两层签名包平（[ENGINE.md §5.1](ENGINE.md)）
 - [ ] 打开本地 EPUB，确认渲染正常
 - [ ] 目录（TOC）渲染
+- [ ] **补齐格式覆盖**：README 声称 5 种格式，`verify:epub` 只跑 EPUB。
+      MOBI/KF8 走 `unzlibSync`、CBZ 走 `fixed-layout.js`（无触摸处理）、FB2 独立解析器 ——
+      **都是一次没跑过的独立路径**。每补一种就加进样本矩阵 → [VERIFY.md §6.5](VERIFY.md)
 - [ ] **真实书覆盖**：合成样本测不到怪结构 —— 已观察到某本中文 EPUB
       **532 个 section 却只有 3 条目录项**。加 `schedule` + `workflow_dispatch`
       的独立 CI job（pin URL + 校验 sha256，**不进 push/PR 路径**）→ [VERIFY.md §6.2](VERIFY.md)

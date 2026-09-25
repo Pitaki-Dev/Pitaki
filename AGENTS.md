@@ -120,6 +120,24 @@ pnpm run gen:sample       # 生成确定性样本
 - `tools/verify/` 需要**完整可用的 Chromium**（GPU，或足够大的 `/dev/shm`）。
   跑不起来就 `git push` 后看 CI：`gh run view <id> --log-failed`
 - 改代码后 CI 会自动跑；**纯文档提交不触发 CI**（`paths-ignore`）
+
+### 每一批的收尾定义（不可协商）
+
+一批改动**只有全绿才算完成**，缺一项就是未完成：
+
+```bash
+pnpm typecheck && pnpm build          # 静态
+pnpm tauri:smoke                      # Tauri 侧：CSP / WebKitGTK / 运行时注入 / IPC
+pnpm verify:epub && pnpm verify:ui    # Chromium 侧：EPUB 回归 / 26 项 UI
+gh run list --limit 1                 # CI 必须绿
+```
+
+- **两边都要过。** 一边绿不代表另一边绿（实测同一本书 WebKit 加载 36 张图、
+  Chromium 只加载 1.29%）
+- **不要把「本地跑不起来」写成「已验证」** —— 不可复现的结论必须显式标注
+  **「未验证」**，并说明为什么
+- **声称支持的功能必须有测试兜底**，否则就是文档在撒谎
+  （当前 README 声称 5 种格式，`verify:epub` 只跑 EPUB → [VERIFY.md §6.5](docs/VERIFY.md)）
 - **新增工具前先问：它防的是哪个已发生过的回归？** 答不上来就别加
   （曾出现 `tools/` 883 行 vs 应用代码 1,028 行 = 86%）
 
