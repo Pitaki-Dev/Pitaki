@@ -12,8 +12,8 @@
 |---|---|---|
 | Phase 0 | 技术选型与可行性验证 | ✅ 已完成 |
 | Phase 0 | 依赖与许可证审计 | ✅ 已完成 |
-| Phase 1 | 工程骨架 | 📋 待开始 |
-| Phase 2 | 界面基础 | 📋 规划中 |
+| Phase 1 | 工程骨架 | ✅ 已完成 |
+| Phase 2 | 界面基础（响应式 + 触摸） | ✅ 已完成（`touch-action` 除外，见下） |
 | Phase 3 | 引擎接入 | 📋 规划中 |
 | Phase 4 | 阅读体验 | 📋 规划中 |
 | Phase 5 | 本地存储 | 📋 规划中 |
@@ -33,24 +33,26 @@
 
 ## Phase 1 — 工程骨架
 
-- [ ] Vite + React + TS + Tauri v2 初始化
-- [ ] Tauri capabilities 与 CSP 配置 → [TAURI.md](TAURI.md)
-- [ ] `git submodule` 引入 foliate-js 并锁定 commit
-- [ ] `scripts/build-foliate-vendor.mjs` 跑通（zip.js / fflate / pdfjs）
-- [ ] CI：typecheck + lint + vendor 构建验证
+- [x] Vite + React + TS + Tauri v2 初始化
+- [x] Tauri capabilities 与 CSP 配置 → [TAURI.md](TAURI.md)
+- [x] `git submodule` 引入 foliate-js 并锁定 commit
+- [x] `scripts/build-foliate-vendor.mjs` 跑通（zip.js / fflate；pdfjs 推迟到 Phase 7）
+- [x] CI：typecheck + build + vendor 构建验证（含入口守卫）
+- [ ] CI 尚未接 **lint**
 
 ## Phase 2 — 界面基础
 
-- [ ] HeroUI v3 + Tailwind v4 接入
-- [ ] 定义**外壳**主题 token（含 `@layer base` 完整块）→ [THEMING.md](THEMING.md)
-- [ ] 自写轻量路由 + 基础布局（书库 / 阅读器 / 设置）
-- [ ] **响应式**：按 [UI.md](UI.md) §4 落实三个断点的布局（手机 / 平板 / 桌面）
-- [ ] **触摸**：
-  - [ ] 触摸目标 ≥ 44×44 px（`min-h-11 min-w-11`）
-  - [ ] 悬停态全部补上触摸等价物（tap-to-toggle chrome 等）
+- [x] HeroUI v3 + Tailwind v4 接入
+- [x] 定义**外壳**主题 token（含 `@layer base` 完整块）→ [THEMING.md](THEMING.md)
+- [x] 自写轻量路由 + 基础布局（书库 / 阅读器 / 设置）
+- [x] **响应式**：按 [UI.md](UI.md) §4 落实三个断点的布局（手机 / 平板 / 桌面）
+- [x] **触摸**：
+  - [x] 触摸目标 ≥ 44×44 px（`min-h-11 min-w-11`）
+  - [x] 悬停态全部补上触摸等价物（tap-to-toggle chrome 等）
   - [ ] `touch-action` / `overscroll-behavior` 按 [UI.md](UI.md) §2 设置
-  - [ ] viewport 含 `viewport-fit=cover`，**不含** `user-scalable=no`
-- [ ] 用 `pointer-coarse:` 变体而非 UA 嗅探区分输入方式
+        —— **刻意留到 Phase 3/4**，因为要设在 `<foliate-view>` 上（`ReaderPage.tsx` 有注释）
+  - [x] viewport 含 `viewport-fit=cover`，**不含** `user-scalable=no`
+- [x] 用 `pointer-coarse:` 变体而非 UA 嗅探区分输入方式
 
 ## Phase 3 — 引擎接入
 

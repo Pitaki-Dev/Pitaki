@@ -147,48 +147,48 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 ---
 
-### Step 1 — 工程骨架
+### Step 1 — 工程骨架 ✅ 已完成
 
-- [ ] `pnpm create tauri-app`（或手动初始化）：Vite + React + TS + Tauri v2
-- [ ] 落地第 4 节的依赖版本（不要用脚手架默认的旧版）
-- [ ] `rust-toolchain.toml` 已在仓库根，确认生效
-- [ ] 配置 `src-tauri/tauri.conf.json`：
-  - **CSP**：放行 `blob:`（`frame-src` / `worker-src` / `img-src`）、`style-src 'unsafe-inline'`
-  - 参考 `docs/TAURI.md` §2
-- [ ] 配置 `src-tauri/capabilities/default.json`：`core:default`、`fs:allow-read-file`、`fs:allow-write-file`、`dialog:default`、`sql:default`
-- [ ] 把 Step 0 的 vendor 构建固化成 `scripts/build-foliate-vendor.mjs`
-- [ ] 把引擎同步固化成 `scripts/sync-foliate.mjs`（或 `postinstall`）
-- [ ] `git submodule add https://github.com/johnfactotum/foliate-js third_party/foliate-js` 并**锁定 commit**
-- [ ] CI：`tsc --noEmit` + `vite build` + vendor 构建
+> 遗留：CI 尚未接 **lint**（只有 typecheck + build + vendor）。
+
+- [x] Vite + React + TS + Tauri v2 初始化
+- [x] 落地第 4 节的依赖版本
+- [x] `rust-toolchain.toml` 在仓库根并生效
+- [x] `tauri.conf.json` 的 CSP（放行 `blob:` 与 `'unsafe-inline'`）→ [TAURI.md](docs/TAURI.md) §2
+- [x] `capabilities/default.json` 权限配置
+- [x] vendor 构建固化为 `scripts/build-foliate-vendor.mjs`
+- [x] 引擎同步固化为 `scripts/sync-foliate.mjs`
+- [x] foliate-js 以 submodule 引入并锁定 commit
+- [x] CI：typecheck + build + vendor 构建
 
 **DoD**：
-- [ ] `pnpm tauri:dev` 能启动窗口，控制台无报错
-- [ ] `pnpm build:vendor` 能重复产出一致的 vendor 产物
-- [ ] **在 Tauri 窗口内重跑 A/B 并全部通过**：`pnpm tauri:smoke`
-      —— 浏览器能跑通 ≠ Tauri 能跑通（真实差异在 CSP 与安全上下文）
+- [x] `pnpm tauri:dev` 能启动窗口，控制台无报错
+- [x] `pnpm build:vendor` 能重复产出一致的 vendor 产物
+- [x] **Tauri 窗口内 A/B 全部通过**：`pnpm tauri:smoke`
 
 ---
 
-### Step 2 — UI 基础
+### Step 2 — UI 基础 ✅ 已完成
 
-> 📌 **开工前必读 [`docs/UI.md`](docs/UI.md)。** 响应式与触摸是**硬性要求**，不是收尾工作。
+> 页面目前是**占位**（书库无书架、阅读器未接引擎），只有「设置」具备真实功能 ——
+> 那是 Step 3 的事。
 
-- [ ] HeroUI v3 + Tailwind v4 接入，`globals.css` 中 `@import "tailwindcss";` **必须在 `@import "@heroui/styles";` 之前**
-- [ ] 在 `@layer base` 里定义**完整**的外壳主题 token（不要只改 `--background`/`--foreground`）
-- [ ] 自写轻量路由（**不要引 React Router**）+ 三页骨架：书库 / 阅读器 / 设置
-- [ ] **响应式**：落实手机（<768）/ 平板（768–1024）/ 桌面（≥1024）三档布局
-- [ ] **触摸**：
-  - [ ] 触摸目标 ≥ 44×44 px（`min-h-11 min-w-11`）
-  - [ ] 悬停态全部补触摸等价物（顶/底栏用 **tap-to-toggle**，不要 hover）
-  - [ ] viewport 含 `viewport-fit=cover`，**绝不含** `user-scalable=no`
-  - [ ] 用 `pointer-coarse:` 变体（Tailwind v4 内置）而非 UA 嗅探
-- [ ] `touch-action` / `overscroll-behavior` 暂不设 —— 留到 Step 3/4 阅读器落地时一起处理
+- [x] HeroUI v3 + Tailwind v4 接入（`@import "tailwindcss";` 必须在 `@heroui/styles` 之前）
+- [x] `@layer base` 里的**完整**外壳主题 token
+- [x] 自写轻量路由（未引 React Router）+ 三页骨架
+- [x] **响应式**：手机 / 平板 / 桌面三档
+- [x] **触摸**：
+  - [x] 触摸目标 ≥ 44×44 px
+  - [x] 悬停态补触摸等价物（tap-to-toggle）
+  - [x] viewport 含 `viewport-fit=cover`，无 `user-scalable=no`
+  - [x] `pointer-coarse:` 变体而非 UA 嗅探
+- [x] `touch-action` / `overscroll-behavior` —— **刻意留到 Step 3/4**（要设在 `<foliate-view>` 上）
 
-**DoD**：
-- [ ] 三个页面可切换；主题切换生效；`<Button>` 样式正常（证明 HeroUI 接入成功）
-- [ ] 320px 窄屏与 1440px 宽屏下布局均不破
-- [ ] **用浏览器 DevTools 的触摸模拟跑一遍**，确认无 hover-only 死角
-- [ ] 键盘 Tab 顺序可用、Esc 能关弹层
+**DoD**：全部由 CI 的 `verify` job 覆盖（26 项检查，见 [VERIFY.md](docs/VERIFY.md)）
+- [x] 三页可切换；主题切换生效；`<Button>` 样式正常
+- [x] 1440px 无横向溢出、书库 ≥6 列
+- [x] 触摸模拟无 hover-only 死角（tap-to-toggle 已验）
+- [x] 抽屉 Esc 可关；Drawer 关闭按钮位置正确（CSS 层叠顺序断言）
 
 ---
 

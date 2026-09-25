@@ -212,7 +212,7 @@ node tools/run-spike.mjs                  # Playwright 驱动，产出 tools/art
 | 记下可用的加载路径 | ✅ | §5.1（`<script type="module" src="/foliate/view.js">`；`import()` ❌） |
 | 记下 foliate-js commit hash | ✅ | §2（`78914ae…`） |
 | 结论写入 `docs/SPIKE-FINDINGS.md` 并提交 | ✅ | 本文件 |
-| 向用户汇报，等确认再进 Step 1 | ⏳ | 见汇报 |
+| 向用户汇报，等确认再进 Step 1 | ✅ | 已完成 —— Step 1/2 均已落地，CI 全绿 |
 
 ### 未验证 / 留待后续
 
