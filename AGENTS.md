@@ -110,8 +110,9 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 - 两套工具互补：`pnpm tauri:smoke`（真 Tauri：CSP / WebKitGTK / 运行时注入 / IPC）、
   `pnpm verify:epub|ui|snapshot`（Chromium：EPUB 回归 / UI 26 项 / 视觉）
-- ⚠️ **本地受限容器跑不了 Chromium**（GPU/renderer 崩、`/dev/shm` 不可用）。
-  **不要在本机反复尝试** —— `git push` 后看 CI：`gh run view <id> --log-failed`
+- `tools/verify/` 需要**完整可用的 Chromium**（GPU，或足够大的 `/dev/shm`）。
+  若你所在环境跑不起来（无头容器 / 无 GPU），别硬调 —— `git push` 后看 CI：
+  `gh run view <id> --log-failed`，CI 是权威环境
 - 「Chromium 绿了」≠「Tauri 绿了」：实测同一本书 WebKit 加载了 36 张图、
   Chromium 只加载 1.29%。**两边都要过**
 - **新增工具前先问：它防的是哪个已发生过的回归？** 答不上来就别加
@@ -132,8 +133,7 @@ pdfjs-dist                 5.5.207   ← 精确锁，不带 ^
 
 #### 环境约定（仍然适用）
 
-- ⚠️ **本地沙箱是 aarch64 且资源受限，跑不了 Chromium**（GPU/renderer 崩、`/dev/shm` 不可用）。
-  **浏览器侧验证一律走 CI**，不要在本机反复尝试 —— 详见 §4.5。
+- 浏览器侧验证（`tools/verify/`）需要**完整可用的 Chromium**。跑不起来就用 CI，详见 §4.5。
 - **不要用 `--host` 通过局域网 IP 访问**（`http://192.168.x.x:5173` **不是安全上下文**，
   会让 Web Crypto SHA-1 失效、字体去混淆报错）。一律用 `http://localhost:5173`。
 - Vite dev server **不设 CSP**；要验 CSP 必须用 `pnpm tauri:smoke`。

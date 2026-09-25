@@ -40,13 +40,16 @@ pnpm tauri:smoke
 
 ---
 
-## 3. ⚠️ 本地跑不了 Chromium —— 用 CI
+## 3. 运行环境要求
 
-**受限容器**（无 `/dev/shm`、无 GPU）下 Chromium 的 GPU/renderer 进程会崩溃，
-表现为 launch 后立刻断开或卡住。软件 GL 回退（`--use-gl=angle --use-angle=swiftshader`）
-也试过，实页导航仍崩。**这与 CPU 架构无关，是容器资源限制。**
+`tools/verify/` 需要**完整可用的 Chromium**：有 GPU，或至少足够大的 `/dev/shm` 与共享内存配额。
 
-**不要在本机反复尝试。** 正确姿势：
+在**资源受限的容器**里（无 GPU、`/dev/shm` 过小），Chromium 的 GPU/renderer 进程会崩溃，
+表现为 launch 后立刻断开或卡住 —— 软件 GL 回退（`--use-gl=angle --use-angle=swiftshader`）
+也救不回来。
+
+**本地能跑就在本地跑。** 若你的环境跑不起来（无头容器、无 GPU 的云开发机等），
+不要花时间硬调，直接交给 CI：
 
 ```bash
 git push
@@ -55,8 +58,8 @@ gh run view <run-id> --log-failed      # 只看失败 step
 gh run download <run-id>               # 取 artifact
 ```
 
-CI 的 `verify` job 是**权威**：它在正常 runner 上跑 `verify:epub` + `verify:ui`，
-并上传 `verify-artifacts`。
+CI 的 `verify` job 跑在标准 GitHub runner 上，是**权威环境**：它执行
+`verify:epub` + `verify:ui` 并上传 `verify-artifacts`。
 
 ---
 

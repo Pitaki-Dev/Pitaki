@@ -164,7 +164,7 @@ pnpm run tauri:dev         # 桌面端开发
 |---|---|---|
 | `tsc` 启动即 panic：`bundled: …/store/v3/files/…/lib.d.ts does not exist` | TypeScript 7 是**原生（Go）编译器**，自带 platform binary，与 pnpm 的硬链接存储不兼容 | 已在 `.npmrc` 设 `package-import-method=copy`，**不要删** |
 | `vite build` 报缺 `esbuild` | Vite 8 默认 minifier 已切换，`minify: 'esbuild'` 需额外安装 | 用 `minify: 'oxc'`（仓库已配置） |
-| Playwright 启动后立刻断开 / 卡住 | **受限容器**（无 `/dev/shm`、无 GPU）下 Chromium 的 GPU/renderer 进程崩溃 —— 与 CPU 架构无关 | 别在本机硬跑，**用 CI 验证**（见 [docs/VERIFY.md](docs/VERIFY.md)） |
+| `verify:*` 脚本启动后立刻断开 / 卡住 | Chromium 需要完整运行环境（GPU 或足够大的 `/dev/shm`）；无头容器 / 无 GPU 机器上会崩 | 用 CI 验证（见 [docs/VERIFY.md](docs/VERIFY.md)） |
 
 ---
 
