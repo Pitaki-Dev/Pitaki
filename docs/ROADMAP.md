@@ -56,8 +56,13 @@
 
 ## Phase 3 — 引擎接入
 
+- [ ] **先定下取书路径**（本项目风险最高的一步，见 [ENGINE.md §4.1](ENGINE.md) / R14）：
+      `view.open(url)` 与 `readFile` **都会整读进内存**。正解是 asset URL +
+      L2 自建 loader + `HttpRangeReader`（Tauri asset 协议原生支持 Range）。
+      **这条链从未被验证过 —— 先验它，再写适配层**
 - [ ] 验证 `view.js` 相对路径可解析
-- [ ] L2 适配层：`open()` + `relocate` + `load` 打通
+- [ ] L2 适配层：`open()` → `init()` → `relocate` / `load` 打通，
+      并把 `view.goTo` 与 `renderer.goTo` 的两层签名包平（[ENGINE.md §5.1](ENGINE.md)）
 - [ ] 打开本地 EPUB，确认渲染正常
 - [ ] 目录（TOC）渲染
 - [ ] **真实书覆盖**：合成样本测不到怪结构 —— 已观察到某本中文 EPUB
